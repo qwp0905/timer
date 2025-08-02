@@ -8,19 +8,20 @@ export class TimingWheel {
   private refedCount = 0
   private lastId = 0
 
-  private recursiveInit() {
-    const immediate = setImmediate(() => {
-      this.tick()
-      if (this.registeredCount === 0) {
-        return
-      }
-      this.recursiveInit()
-    })
-    if (this.refedCount === 0) {
-      immediate.unref()
-    } else {
-      immediate.ref()
+  private perEventLoop = () => {
+    this.tick()
+    if (this.registeredCount === 0) {
+      return
     }
+    this.recursiveInit()
+  }
+  private recursiveInit() {
+    const immediate = setImmediate(this.perEventLoop)
+    if (this.refedCount > 0) {
+      return
+    }
+
+    immediate.unref()
   }
 
   private createTimeoutTask(callback: () => any, delay: number, args: any[]): Task {
