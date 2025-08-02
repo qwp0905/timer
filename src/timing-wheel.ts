@@ -1,4 +1,4 @@
-import { Task } from "./task"
+import { IntervalTask, Task } from "./task"
 import { convertToIndex } from "./utils"
 
 export class TimingWheel {
@@ -6,6 +6,7 @@ export class TimingWheel {
   private currentTick: number = Date.now()
   private registeredCount = 0
   private refedCount = 0
+  private lastId = 0
 
   private recursiveInit() {
     const immediate = setImmediate(() => {
@@ -22,9 +23,10 @@ export class TimingWheel {
     }
   }
 
-  private createTask(callback: () => any, delay: number, args: any[]): Task {
+  private createTimeoutTask(callback: () => any, delay: number, args: any[]): Task {
     const ref = new WeakRef(this)
     return new Task({
+      id: this.lastId++,
       _onTimeout: callback,
       args,
       delay,
@@ -32,7 +34,21 @@ export class TimingWheel {
       beforeRef: (task) => ref.deref()?.beforeRef(task),
       beforeUnref: (task) => ref.deref()?.beforeUnref(task),
       register: (task) => ref.deref()?.registerTask(task),
-      unregister: (task) => ref.deref()?.unregister(task)
+      unregister: (task) => ref.deref()?.unregisterTimeout(task)
+    })
+  }
+  private createIntervalTask(callback: () => any, interval: number, args: any[]) {
+    const ref = new WeakRef(this)
+    return new IntervalTask({
+      id: this.lastId++,
+      _onTimeout: callback,
+      args,
+      delay: interval,
+      scheduledAt: Date.now(),
+      beforeRef: (task) => ref.deref()?.beforeRef(task),
+      beforeUnref: (task) => ref.deref()?.beforeUnref(task),
+      register: (task) => ref.deref()?.registerTask(task),
+      unregister: (task) => ref.deref()?.unregisterTimeout(task)
     })
   }
 
@@ -66,13 +82,23 @@ export class TimingWheel {
     this.buckets[layer][index].add(task)
   }
 
-  register(callback: (...args: any[]) => any, delay: number, ...args: any[]): NodeJS.Timeout {
-    const task = this.createTask(callback, delay, args)
+  registerTimeout(callback: (...args: any[]) => any, delay: number, ...args: any[]): Task {
+    const task = this.createTimeoutTask(callback, delay, args)
+    this.registerTask(task)
+    return task
+  }
+  registerInterval(
+    callback: (...args: any[]) => any,
+    interval: number,
+    ...args: any[]
+  ): IntervalTask {
+    const task = this.createIntervalTask(callback, interval, args)
     this.registerTask(task)
     return task
   }
 
-  unregister(task: Task) {
+  unregisterTimeout(task: Task) {
+    task.markAsClosed()
     for (let layer = 0; layer < this.buckets.length; layer += 1) {
       const index = task.getIndex(layer)!
       const tasks = this.buckets[layer][index]
@@ -103,7 +129,7 @@ export class TimingWheel {
 
       const index = indexes.at(layer)!
       if (!this.buckets[layer][index]?.size) {
-        dropdown = new Set()
+        dropdown.clear()
         continue
       }
 
@@ -116,6 +142,7 @@ export class TimingWheel {
       task.execute()
       this.registeredCount -= 1
       this.refedCount -= task.hasRef() ? 1 : 0
+      task.afterTaskRun()
     }
 
     this.tick()

@@ -1,6 +1,7 @@
 import { convertToIndex } from "./utils"
 
 export interface CreateTaskOptions {
+  id: number
   _onTimeout: (...args: any[]) => any
   args: any[]
   delay: number
@@ -12,18 +13,21 @@ export interface CreateTaskOptions {
 }
 
 export class Task implements NodeJS.Timeout {
-  private indexes: number[]
-  private closed = false
-  private refed = true
+  protected readonly id: number
+  protected indexes: number[]
+  protected closed = false
+  protected refed = true
   readonly _onTimeout: (...args: any[]) => any
-  private readonly args: any[]
-  private readonly delay: number
-  private scheduledAt: number
-  private readonly beforeRef: (task: Task) => void
-  private readonly beforeUnref: (task: Task) => void
-  private readonly register: (task: Task) => void
-  private readonly unregister: (task: Task) => void
+  protected readonly args: any[]
+  protected readonly delay: number
+  protected scheduledAt: number
+  protected readonly beforeRef: (task: Task) => void
+  protected readonly beforeUnref: (task: Task) => void
+  protected readonly register: (task: Task) => void
+  protected readonly unregister: (task: Task) => void
+
   constructor({
+    id,
     _onTimeout,
     args,
     delay,
@@ -33,6 +37,7 @@ export class Task implements NodeJS.Timeout {
     register,
     unregister
   }: CreateTaskOptions) {
+    this.id = id
     this._onTimeout = _onTimeout
     this.args = args
     this.delay = delay
@@ -44,13 +49,21 @@ export class Task implements NodeJS.Timeout {
     this.indexes = convertToIndex(this.getExecutionTime())
   }
 
+  protected refreshDate() {
+    this.scheduledAt = Date.now()
+    this.indexes = convertToIndex(this.getExecutionTime())
+  }
+
   close(): this {
     if (this.closed) {
       return this
     }
-    this.closed = true
     this.unregister(this)
     return this
+  }
+
+  markAsClosed() {
+    this.closed = true
   }
 
   hasRef(): boolean {
@@ -65,8 +78,7 @@ export class Task implements NodeJS.Timeout {
 
   refresh(): this {
     this.unregister(this)
-    this.scheduledAt = Date.now()
-    this.indexes = convertToIndex(this.getExecutionTime())
+    this.refreshDate()
     this.register(this)
     return this
   }
@@ -78,11 +90,11 @@ export class Task implements NodeJS.Timeout {
   }
 
   [Symbol.toPrimitive](): number {
-    throw new Error("Method not implemented.")
+    return this.getId()
   }
 
   [Symbol.dispose](): void {
-    throw new Error("Method not implemented.")
+    this.close()
   }
 
   execute() {
@@ -103,5 +115,21 @@ export class Task implements NodeJS.Timeout {
 
   getScheduledAt() {
     return this.scheduledAt
+  }
+
+  afterTaskRun() {}
+
+  getId() {
+    return this.id
+  }
+}
+
+export class IntervalTask extends Task {
+  afterTaskRun(): void {
+    if (this.closed) {
+      return
+    }
+    this.refreshDate()
+    this.register(this)
   }
 }
