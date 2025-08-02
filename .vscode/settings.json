@@ -1,0 +1,40 @@
+{
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.formatOnSave": true,
+  "javascript.format.enable": false,
+  "typescript.format.enable": false,
+  "javascript.updateImportsOnFileMove.enabled": "always",
+  "typescript.updateImportsOnFileMove.enabled": "always",
+  "typescript.preferences.includePackageJsonAutoImports": "on",
+  "css.completion.completePropertyWithSemicolon": false,
+  "less.completion.completePropertyWithSemicolon": false,
+  "scss.completion.completePropertyWithSemicolon": false,
+  "terminal.integrated.defaultProfile.osx": "zsh",
+  "javascript.preferences.importModuleSpecifier": "relative",
+  "typescript.preferences.importModuleSpecifier": "relative",
+  "files.autoSave": "onFocusChange",
+  "prettier.configPath": ".prettierrc",
+  "prettier.requireConfig": true,
+  "javascript.preferences.useAliasesForRenames": true,
+  "typescript.preferences.useAliasesForRenames": true,
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "search.exclude": {
+    "**/.yarn": true,
+    "**/.pnp.*": true
+  },
+  "eslint.nodePath": ".yarn/sdks",
+  "prettier.prettierPath": ".yarn/sdks/prettier/index.cjs",
+  "typescript.tsdk": ".yarn/sdks/typescript/lib",
+  "typescript.enablePromptUseWorkspaceTsdk": true,
+  "code-runner.executorMap": {
+    "typescript": "yarn ts-node"
+  },
+  "jest.runMode": {
+    "type": "watch",
+    "coverage": true,
+    "runAllTestsOnStartup": true
+  },
+  "jest.enable": true
+}
