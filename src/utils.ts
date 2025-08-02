@@ -1,9 +1,12 @@
-import { BUCKET_SIZE } from "./constants"
+import { BUCKET_MASK, BUCKET_SIZE } from "./constants"
 
 export function convertToIndex(timestamp: number) {
-  return timestamp
-    .toString(BUCKET_SIZE)
-    .split("")
-    .map((e) => parseInt(e, BUCKET_SIZE))
-    .reverse()
+  const indexes: number[] = []
+
+  while (timestamp > 0) {
+    indexes.push(timestamp & BUCKET_MASK)
+    timestamp = Math.floor(timestamp / BUCKET_SIZE)
+  }
+
+  return indexes
 }
