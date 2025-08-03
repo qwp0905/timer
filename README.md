@@ -239,30 +239,6 @@ bar
 
 Performance advantage increases with the number of active timers.
 
-## API Reference
-
-### Global Functions
-
-- `setGlobalTimers()`: Override native Node.js timer functions
-- `clearGlobalTimers()`: Restore native Node.js timer functions
-
-### TimingWheel Class
-
-- `constructor()`: Create a new timing wheel instance
-- `registerTimeout(callback, delay, ...args)`: Register a timeout
-- `registerInterval(callback, delay, ...args)`: Register an interval
-- `unregisterTimeout(task)`: Cancel a registered task
-
-### TimeoutTask & IntervalTask Classes
-
-Both implement the `NodeJS.Timeout` interface:
-
-- `ref()`: Keep the event loop running for this timer
-- `unref()`: Allow the process to exit if this is the only active timer
-- `refresh()`: Reset the timer
-- `close()`: Cancel the timer
-- `[Symbol.dispose]()`: Support for resource management with `using` statement
-
 ## License
 
-MIT
+Apache License 2.0
