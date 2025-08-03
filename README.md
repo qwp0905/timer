@@ -226,17 +226,6 @@ Tests with 3 million timers show significant performance improvements over nativ
 | Timer Cancellation | 4.7s           | 2.9s         | ~38% faster        |
 | Memory Usage       | Higher         | Lower        | Varies by workload |
 
-```mermaid
-bar
-    title Performance Comparison (Lower is better)
-    xlabel Seconds
-    ylabel Operations
-    "Timer Creation - Native Node.js"    : 5.2
-    "Timer Creation - Timing Wheel"      : 3.8
-    "Timer Cancellation - Native Node.js": 4.7
-    "Timer Cancellation - Timing Wheel"  : 2.9
-```
-
 Performance advantage increases with the number of active timers.
 
 ## License
