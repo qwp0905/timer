@@ -45,7 +45,7 @@ export class TimeoutTask implements NodeJS.Timeout {
     this.id = id
     this._onTimeout = _onTimeout
     this.args = args
-    this.delay = delay
+    this.delay = Math.max(1, delay)
     this.scheduledAt = scheduledAt
     this.beforeRef = beforeRef
     this.beforeUnref = beforeUnref

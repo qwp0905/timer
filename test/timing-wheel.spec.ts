@@ -117,4 +117,47 @@ describe("TimingWheel", () => {
     jest.advanceTimersByTime(1)
     expect(callback).toHaveBeenCalledTimes(3)
   })
+
+  it("should execute timeout immediately when delay under 1", () => {
+    const callback = jest.fn()
+    timingWheel.registerTimeout(callback)
+    expect(callback).toHaveBeenCalledTimes(0)
+
+    jest.advanceTimersByTime(1)
+    expect(callback).toHaveBeenCalledTimes(1)
+
+    timingWheel.registerTimeout(callback, -1000)
+    expect(callback).toHaveBeenCalledTimes(1)
+
+    jest.advanceTimersByTime(1)
+    expect(callback).toHaveBeenCalledTimes(2)
+  })
+
+  it("should execute interval immediately when delay under 1", () => {
+    const callback = jest.fn()
+    let task = timingWheel.registerInterval(callback)
+    expect(callback).toHaveBeenCalledTimes(0)
+
+    jest.advanceTimersByTime(1)
+    expect(callback).toHaveBeenCalledTimes(1)
+
+    jest.advanceTimersByTime(1)
+    expect(callback).toHaveBeenCalledTimes(2)
+
+    jest.advanceTimersByTime(1)
+    expect(callback).toHaveBeenCalledTimes(3)
+
+    task.close()
+
+    task = timingWheel.registerInterval(callback, -1000)
+    expect(callback).toHaveBeenCalledTimes(3)
+
+    jest.advanceTimersByTime(1)
+    expect(callback).toHaveBeenCalledTimes(4)
+
+    jest.advanceTimersByTime(1)
+    expect(callback).toHaveBeenCalledTimes(5)
+
+    task.close()
+  })
 })

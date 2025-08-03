@@ -90,7 +90,11 @@ export class TimingWheel {
     tasks.add(task)
   }
 
-  registerTimeout(callback: (...args: any[]) => any, delay: number, ...args: any[]): TimeoutTask {
+  registerTimeout(
+    callback: (...args: any[]) => any,
+    delay: number = 1,
+    ...args: any[]
+  ): TimeoutTask {
     if (this.registeredCount === 0) {
       this.started = Date.now()
     }
@@ -98,7 +102,11 @@ export class TimingWheel {
     this.registerTask(task)
     return task
   }
-  registerInterval(callback: (...args: any[]) => any, delay: number, ...args: any[]): IntervalTask {
+  registerInterval(
+    callback: (...args: any[]) => any,
+    delay: number = 1,
+    ...args: any[]
+  ): IntervalTask {
     if (this.registeredCount === 0) {
       this.started = Date.now()
     }
