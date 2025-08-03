@@ -3,10 +3,15 @@ import { convertToIndex } from "./utils"
 
 export class TimingWheel {
   private readonly buckets: (Set<TimeoutTask> | null)[][] = []
-  private currentTick: number = Date.now()
+  private started = Date.now()
+  private currentTick: number = this.getNow()
   private registeredCount = 0
   private refedCount = 0
   private lastId = 0
+
+  private getNow() {
+    return Date.now() - this.started
+  }
 
   private perEventLoop = () => {
     this.tick()
@@ -31,11 +36,12 @@ export class TimingWheel {
       _onTimeout: callback,
       args,
       delay,
-      scheduledAt: Date.now(),
+      scheduledAt: this.getNow(),
       beforeRef: (task) => ref.deref()?.beforeRef(task),
       beforeUnref: (task) => ref.deref()?.beforeUnref(task),
       register: (task) => ref.deref()?.registerTask(task),
-      unregister: (task) => ref.deref()?.unregisterTimeout(task)
+      unregister: (task) => ref.deref()?.unregisterTimeout(task),
+      getNow: () => ref.deref()!.getNow()
     })
   }
   private createIntervalTask(callback: () => any, interval: number, args: any[]) {
@@ -45,11 +51,12 @@ export class TimingWheel {
       _onTimeout: callback,
       args,
       delay: interval,
-      scheduledAt: Date.now(),
+      scheduledAt: this.getNow(),
       beforeRef: (task) => ref.deref()?.beforeRef(task),
       beforeUnref: (task) => ref.deref()?.beforeUnref(task),
       register: (task) => ref.deref()?.registerTask(task),
-      unregister: (task) => ref.deref()?.unregisterTimeout(task)
+      unregister: (task) => ref.deref()?.unregisterTimeout(task),
+      getNow: () => ref.deref()!.getNow()
     })
   }
 
@@ -84,11 +91,17 @@ export class TimingWheel {
   }
 
   registerTimeout(callback: (...args: any[]) => any, delay: number, ...args: any[]): TimeoutTask {
+    if (this.registeredCount === 0) {
+      this.started = Date.now()
+    }
     const task = this.createTimeoutTask(callback, delay, args)
     this.registerTask(task)
     return task
   }
   registerInterval(callback: (...args: any[]) => any, delay: number, ...args: any[]): IntervalTask {
+    if (this.registeredCount === 0) {
+      this.started = Date.now()
+    }
     const task = this.createIntervalTask(callback, delay, args)
     this.registerTask(task)
     return task
@@ -114,7 +127,7 @@ export class TimingWheel {
   }
 
   private tick() {
-    const now = Date.now()
+    const now = this.getNow()
     let dropdown = new Set<TimeoutTask>()
     while (now > this.currentTick) {
       const current = this.currentTick + 1

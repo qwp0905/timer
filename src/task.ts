@@ -10,6 +10,7 @@ export interface CreateTaskOptions {
   beforeUnref: (task: TimeoutTask) => void
   register: (task: TimeoutTask) => void
   unregister: (task: TimeoutTask) => void
+  getNow: () => number
 }
 
 export class TimeoutTask implements NodeJS.Timeout {
@@ -17,14 +18,17 @@ export class TimeoutTask implements NodeJS.Timeout {
   protected indexes: number[]
   protected closed = false
   protected refed = true
-  readonly _onTimeout: (...args: any[]) => any
   protected readonly args: any[]
   protected readonly delay: number
   protected scheduledAt: number
+
+  readonly _onTimeout: (...args: any[]) => any
+
   protected readonly beforeRef: (task: TimeoutTask) => void
   protected readonly beforeUnref: (task: TimeoutTask) => void
   protected readonly register: (task: TimeoutTask) => void
   protected readonly unregister: (task: TimeoutTask) => void
+  protected readonly getNow: () => number
 
   constructor({
     id,
@@ -35,7 +39,8 @@ export class TimeoutTask implements NodeJS.Timeout {
     beforeRef,
     beforeUnref,
     register,
-    unregister
+    unregister,
+    getNow
   }: CreateTaskOptions) {
     this.id = id
     this._onTimeout = _onTimeout
@@ -47,10 +52,11 @@ export class TimeoutTask implements NodeJS.Timeout {
     this.register = register
     this.unregister = unregister
     this.indexes = convertToIndex(this.getExecutionTime())
+    this.getNow = getNow
   }
 
-  protected refreshDate() {
-    this.scheduledAt = Date.now()
+  refreshDate() {
+    this.scheduledAt = this.getNow()
     this.indexes = convertToIndex(this.getExecutionTime())
   }
 
@@ -127,6 +133,11 @@ export class TimeoutTask implements NodeJS.Timeout {
 
   refCount() {
     return (this.refed && 1) || 0
+  }
+
+  setScheduledAt(timestamp: number) {
+    this.scheduledAt = timestamp
+    this.indexes = convertToIndex(this.getExecutionTime())
   }
 }
 
