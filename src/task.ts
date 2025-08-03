@@ -6,13 +6,13 @@ export interface CreateTaskOptions {
   args: any[]
   delay: number
   scheduledAt: number
-  beforeRef: (task: Task) => void
-  beforeUnref: (task: Task) => void
-  register: (task: Task) => void
-  unregister: (task: Task) => void
+  beforeRef: (task: TimeoutTask) => void
+  beforeUnref: (task: TimeoutTask) => void
+  register: (task: TimeoutTask) => void
+  unregister: (task: TimeoutTask) => void
 }
 
-export class Task implements NodeJS.Timeout {
+export class TimeoutTask implements NodeJS.Timeout {
   protected readonly id: number
   protected indexes: number[]
   protected closed = false
@@ -21,10 +21,10 @@ export class Task implements NodeJS.Timeout {
   protected readonly args: any[]
   protected readonly delay: number
   protected scheduledAt: number
-  protected readonly beforeRef: (task: Task) => void
-  protected readonly beforeUnref: (task: Task) => void
-  protected readonly register: (task: Task) => void
-  protected readonly unregister: (task: Task) => void
+  protected readonly beforeRef: (task: TimeoutTask) => void
+  protected readonly beforeUnref: (task: TimeoutTask) => void
+  protected readonly register: (task: TimeoutTask) => void
+  protected readonly unregister: (task: TimeoutTask) => void
 
   constructor({
     id,
@@ -117,14 +117,20 @@ export class Task implements NodeJS.Timeout {
     return this.scheduledAt
   }
 
-  afterTaskRun() {}
+  afterTaskRun() {
+    this.closed = true
+  }
 
   getId() {
     return this.id
   }
+
+  refCount() {
+    return (this.refed && 1) || 0
+  }
 }
 
-export class IntervalTask extends Task {
+export class IntervalTask extends TimeoutTask {
   afterTaskRun(): void {
     if (this.closed) {
       return

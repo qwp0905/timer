@@ -26,3 +26,15 @@ export function setGlobalTimers() {
     globalTimer
   ) as unknown as typeof global.clearInterval
 }
+
+const globalSetTimeout = global.setTimeout
+const globalClearTimeout = global.clearTimeout
+const globalSetInterval = global.setInterval
+const globalClearInterval = global.clearInterval
+
+export function clearGlobalTimers() {
+  global.setTimeout = globalSetTimeout
+  global.clearTimeout = globalClearTimeout
+  global.setInterval = globalSetInterval
+  global.clearInterval = globalClearInterval
+}

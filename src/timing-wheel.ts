@@ -1,8 +1,8 @@
-import { IntervalTask, Task } from "./task"
+import { IntervalTask, TimeoutTask } from "./task"
 import { convertToIndex } from "./utils"
 
 export class TimingWheel {
-  private readonly buckets: (Set<Task> | null)[][] = []
+  private readonly buckets: (Set<TimeoutTask> | null)[][] = []
   private currentTick: number = Date.now()
   private registeredCount = 0
   private refedCount = 0
@@ -24,9 +24,9 @@ export class TimingWheel {
     immediate.unref()
   }
 
-  private createTimeoutTask(callback: () => any, delay: number, args: any[]): Task {
+  private createTimeoutTask(callback: () => any, delay: number, args: any[]): TimeoutTask {
     const ref = new WeakRef(this)
-    return new Task({
+    return new TimeoutTask({
       id: this.lastId++,
       _onTimeout: callback,
       args,
@@ -53,25 +53,25 @@ export class TimingWheel {
     })
   }
 
-  private beforeRef(task: Task) {
+  private beforeRef(task: TimeoutTask) {
     if (task.hasRef()) {
       return
     }
     this.refedCount += 1
   }
-  private beforeUnref(task: Task) {
+  private beforeUnref(task: TimeoutTask) {
     if (!task.hasRef()) {
       return
     }
     this.refedCount -= 1
   }
 
-  private registerTask(task: Task) {
+  private registerTask(task: TimeoutTask) {
     if (this.registeredCount++ === 0) {
       this.currentTick = task.getScheduledAt()
       this.recursiveInit()
     }
-    this.refedCount += task.hasRef() ? 1 : 0
+    this.refedCount += task.refCount()
 
     const layer = task.getLayer()
     const index = task.getIndex(-1)!
@@ -79,26 +79,22 @@ export class TimingWheel {
       this.buckets.push([])
     }
 
-    this.buckets[layer][index] ??= new Set()
-    this.buckets[layer][index].add(task)
+    const tasks = (this.buckets[layer][index] ??= new Set())
+    tasks.add(task)
   }
 
-  registerTimeout(callback: (...args: any[]) => any, delay: number, ...args: any[]): Task {
+  registerTimeout(callback: (...args: any[]) => any, delay: number, ...args: any[]): TimeoutTask {
     const task = this.createTimeoutTask(callback, delay, args)
     this.registerTask(task)
     return task
   }
-  registerInterval(
-    callback: (...args: any[]) => any,
-    interval: number,
-    ...args: any[]
-  ): IntervalTask {
-    const task = this.createIntervalTask(callback, interval, args)
+  registerInterval(callback: (...args: any[]) => any, delay: number, ...args: any[]): IntervalTask {
+    const task = this.createIntervalTask(callback, delay, args)
     this.registerTask(task)
     return task
   }
 
-  unregisterTimeout(task: Task) {
+  unregisterTimeout(task: TimeoutTask) {
     task.markAsClosed()
     for (let layer = 0; layer < this.buckets.length; layer += 1) {
       const index = task.getIndex(layer)!
@@ -107,45 +103,48 @@ export class TimingWheel {
         continue
       }
 
+      if (tasks.size === 0) {
+        this.buckets[layer][index] = null
+      }
+
       this.registeredCount -= 1
-      this.refedCount -= task.hasRef() ? 1 : 0
+      this.refedCount -= task.refCount()
       return
     }
   }
 
   private tick() {
-    if (Date.now() <= this.currentTick) {
-      return
-    }
+    const now = Date.now()
+    let dropdown = new Set<TimeoutTask>()
+    while (now > this.currentTick) {
+      const current = this.currentTick + 1
+      const indexes = convertToIndex(current)
 
-    const current = this.currentTick + 1
-    let dropdown: Set<Task> = new Set()
-    const indexes = convertToIndex(current)
-    for (let layer = this.buckets.length - 1; layer >= 0; layer -= 1) {
+      layerLoop: for (let layer = this.buckets.length - 1; layer >= 0; layer -= 1) {
+        for (const task of dropdown) {
+          const tasks = (this.buckets[layer][task.getIndex(layer)!] ??= new Set())
+          tasks.add(task)
+        }
+
+        const index = indexes.at(layer)!
+        if (!this.buckets[layer][index]?.size) {
+          dropdown.clear()
+          continue layerLoop
+        }
+
+        dropdown = this.buckets[layer][index]!
+        this.buckets[layer][index] = null
+      }
+
+      this.currentTick = current
+
       for (const task of dropdown) {
-        const index = task.getIndex(layer)!
-        this.buckets[layer][index] ??= new Set()
-        this.buckets[layer][index]!.add(task)
+        task.execute()
+        this.registeredCount -= 1
+        this.refedCount -= task.refCount()
+        task.afterTaskRun()
       }
-
-      const index = indexes.at(layer)!
-      if (!this.buckets[layer][index]?.size) {
-        dropdown.clear()
-        continue
-      }
-
-      dropdown = this.buckets[layer][index]!
-      this.buckets[layer][index] = null
+      dropdown.clear()
     }
-
-    this.currentTick = current
-    for (const task of dropdown) {
-      task.execute()
-      this.registeredCount -= 1
-      this.refedCount -= task.hasRef() ? 1 : 0
-      task.afterTaskRun()
-    }
-
-    this.tick()
   }
 }
