@@ -156,6 +156,7 @@ export class TimingWheel {
 
         dropdown = tasks
         this.buckets[layer][index] = null
+        // TODO if bucket is empty, remove layer
       }
 
       this.currentTick = current
