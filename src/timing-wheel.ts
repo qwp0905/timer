@@ -81,10 +81,6 @@ export class TimingWheel {
   }
 
   private registerTask(task: TimeoutTask) {
-    if (this.count === 0) {
-      this.currentTick = task.getScheduledAt()
-      this.recursiveInit()
-    }
     this.refedCount += task.refCount()
 
     const layer = task.getLayer()
@@ -101,6 +97,8 @@ export class TimingWheel {
   ): TimeoutTask {
     if (this.count === 0) {
       this.started = Date.now()
+      this.currentTick = this.getNow()
+      this.recursiveInit()
     }
     const task = this.createTimeoutTask(callback, delay, args)
     this.registerTask(task)
@@ -113,6 +111,8 @@ export class TimingWheel {
   ): IntervalTask {
     if (this.count === 0) {
       this.started = Date.now()
+      this.currentTick = this.getNow()
+      this.recursiveInit()
     }
     const task = this.createIntervalTask(callback, delay, args)
     this.registerTask(task)
