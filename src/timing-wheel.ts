@@ -127,12 +127,13 @@ export class TimingWheel {
         }
 
         const index = indexes.at(layer)!
-        if (!this.buckets[layer][index]?.size) {
+        const tasks = this.buckets[layer][index]
+        if (!tasks) {
           dropdown.clear()
           continue layerLoop
         }
 
-        dropdown = this.buckets[layer][index]!
+        dropdown = tasks
         this.buckets[layer][index] = null
       }
 
