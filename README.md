@@ -51,6 +51,49 @@ graph TD
     style W2 fill:#bfb,stroke:#333,stroke-width:2px
 ```
 
+### Single Wheel Operation
+
+As the current position advances around each wheel, timers in each bucket are executed when their time slot is reached.
+
+```mermaid
+graph LR
+    subgraph "Wheel Operation"
+        direction TB
+        subgraph "Wheel 0"
+            direction LR
+            C[Current Position]
+            B0[Bucket 0]
+            B1[Bucket 1]
+            B2[Bucket 2]
+            B3[Bucket 3]
+            B4[Bucket 4]
+            B5[Bucket 5]
+            B6[Bucket 6]
+            B7[Bucket 7]
+
+            C --> B0
+            B0 --- B1
+            B1 --- B2
+            B2 --- B3
+            B3 --- B4
+            B4 --- B5
+            B5 --- B6
+            B6 --- B7
+            B7 -.- B0
+        end
+    end
+
+    T1[5ms Timer] --> B5
+    T2[2ms Timer] --> B2
+    T3[7ms Timer] --> B7
+
+    style C fill:#f55,stroke:#333,stroke-width:4px
+    style B0 fill:#ddd,stroke:#333,stroke-width:2px
+    style B5 fill:#ffd,stroke:#333,stroke-width:2px
+    style B2 fill:#ffd,stroke:#333,stroke-width:2px
+    style B7 fill:#ffd,stroke:#333,stroke-width:2px
+```
+
 ### Visual Example: Timer Processing
 
 ```mermaid
@@ -156,49 +199,6 @@ async function example() {
 
 example()
 ```
-
-## Timing Wheel Conceptual Overview
-
-```mermaid
-graph LR
-    subgraph "Timing Wheel with Buckets"
-        direction TB
-        subgraph "Wheel 0"
-            direction LR
-            C[Current Position]
-            B0[Bucket 0]
-            B1[Bucket 1]
-            B2[Bucket 2]
-            B3[Bucket 3]
-            B4[Bucket 4]
-            B5[Bucket 5]
-            B6[Bucket 6]
-            B7[Bucket 7]
-
-            C --> B0
-            B0 --- B1
-            B1 --- B2
-            B2 --- B3
-            B3 --- B4
-            B4 --- B5
-            B5 --- B6
-            B6 --- B7
-            B7 -.- B0
-        end
-    end
-
-    T1[5ms Timer] --> B5
-    T2[2ms Timer] --> B2
-    T3[7ms Timer] --> B7
-
-    style C fill:#f55,stroke:#333,stroke-width:4px
-    style B0 fill:#ddd,stroke:#333,stroke-width:2px
-    style B5 fill:#ffd,stroke:#333,stroke-width:2px
-    style B2 fill:#ffd,stroke:#333,stroke-width:2px
-    style B7 fill:#ffd,stroke:#333,stroke-width:2px
-```
-
-As the current position advances around the wheel, timers in each bucket are executed when their time slot is reached. For timers that need to be scheduled further in the future, additional wheels with larger time granularity are used.
 
 ## Use Cases
 
