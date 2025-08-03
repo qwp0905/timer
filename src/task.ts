@@ -134,11 +134,6 @@ export class TimeoutTask implements NodeJS.Timeout {
   refCount() {
     return (this.refed && 1) || 0
   }
-
-  setScheduledAt(timestamp: number) {
-    this.scheduledAt = timestamp
-    this.indexes = convertToIndex(this.getExecutionTime())
-  }
 }
 
 export class IntervalTask extends TimeoutTask {
