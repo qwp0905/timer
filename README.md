@@ -22,6 +22,58 @@ The timing wheel algorithm is an efficient data structure for managing timers wi
 3. **Timer Placement**: Timers are placed in appropriate buckets based on execution time
 4. **Cascading Mechanism**: As time progresses, timers from higher layers "cascade down" to lower layers
 
+```mermaid
+graph TD
+    subgraph "Timing Wheel Structure"
+        W0[Wheel 0 - Finest Granularity]
+        W1[Wheel 1 - Medium Granularity]
+        W2[Wheel 2 - Coarse Granularity]
+
+        B00[Bucket 0] --- W0
+        B01[Bucket 1] --- W0
+        B02[Bucket 2] --- W0
+        B03[...] --- W0
+
+        B10[Bucket 0] --- W1
+        B11[Bucket 1] --- W1
+        B12[...] --- W1
+
+        B20[Bucket 0] --- W2
+        B21[...] --- W2
+    end
+
+    T1[Timer 1 - 5ms] --> B01
+    T2[Timer 2 - 28ms] --> B10
+    T3[Timer 3 - 200ms] --> B20
+
+    style W0 fill:#f9f,stroke:#333,stroke-width:2px
+    style W1 fill:#bbf,stroke:#333,stroke-width:2px
+    style W2 fill:#bfb,stroke:#333,stroke-width:2px
+```
+
+### Visual Example: Timer Processing
+
+```mermaid
+sequenceDiagram
+    participant App as Application
+    participant TW as Timing Wheel
+    participant W0 as Wheel 0
+    participant W1 as Wheel 1
+
+    App->>TW: setTimeout(callback, 65ms)
+    Note over TW: Calculate placement
+    TW->>W1: Place in Bucket 1
+
+    Note over TW: Time passes (60ms)
+    TW->>W1: Process Bucket 1
+    W1->>W0: Cascade timers to Wheel 0
+    Note over W0: Timer moved to Bucket 5
+
+    Note over TW: Time passes (5ms)
+    TW->>W0: Process Bucket 5
+    W0->>App: Execute callback
+```
+
 This implementation includes several optimizations that result in superior performance and memory efficiency, particularly when managing large numbers of timers.
 
 ## Installation
@@ -105,6 +157,49 @@ async function example() {
 example()
 ```
 
+## Timing Wheel Conceptual Overview
+
+```mermaid
+graph LR
+    subgraph "Timing Wheel with Buckets"
+        direction TB
+        subgraph "Wheel 0"
+            direction LR
+            C[Current Position]
+            B0[Bucket 0]
+            B1[Bucket 1]
+            B2[Bucket 2]
+            B3[Bucket 3]
+            B4[Bucket 4]
+            B5[Bucket 5]
+            B6[Bucket 6]
+            B7[Bucket 7]
+
+            C --> B0
+            B0 --- B1
+            B1 --- B2
+            B2 --- B3
+            B3 --- B4
+            B4 --- B5
+            B5 --- B6
+            B6 --- B7
+            B7 -.- B0
+        end
+    end
+
+    T1[5ms Timer] --> B5
+    T2[2ms Timer] --> B2
+    T3[7ms Timer] --> B7
+
+    style C fill:#f55,stroke:#333,stroke-width:4px
+    style B0 fill:#ddd,stroke:#333,stroke-width:2px
+    style B5 fill:#ffd,stroke:#333,stroke-width:2px
+    style B2 fill:#ffd,stroke:#333,stroke-width:2px
+    style B7 fill:#ffd,stroke:#333,stroke-width:2px
+```
+
+As the current position advances around the wheel, timers in each bucket are executed when their time slot is reached. For timers that need to be scheduled further in the future, additional wheels with larger time granularity are used.
+
 ## Use Cases
 
 This library is particularly valuable in these scenarios:
@@ -130,6 +225,17 @@ Tests with 3 million timers show significant performance improvements over nativ
 | Timer Creation     | 5.2s           | 3.8s         | ~27% faster        |
 | Timer Cancellation | 4.7s           | 2.9s         | ~38% faster        |
 | Memory Usage       | Higher         | Lower        | Varies by workload |
+
+```mermaid
+bar
+    title Performance Comparison (Lower is better)
+    xlabel Seconds
+    ylabel Operations
+    "Timer Creation - Native Node.js"    : 5.2
+    "Timer Creation - Timing Wheel"      : 3.8
+    "Timer Cancellation - Native Node.js": 4.7
+    "Timer Cancellation - Timing Wheel"  : 2.9
+```
 
 Performance advantage increases with the number of active timers.
 
