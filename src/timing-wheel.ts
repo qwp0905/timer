@@ -90,16 +90,21 @@ export class TimingWheel {
     this.layers[layer].insert(task)
   }
 
+  private init() {
+    if (this.count > 0) {
+      return
+    }
+    this.started = Date.now()
+    this.currentTick = this.getNow()
+    this.recursiveInit()
+  }
+
   registerTimeout(
     callback: (...args: any[]) => any,
     delay: number = 1,
     ...args: any[]
   ): TimeoutTask {
-    if (this.count === 0) {
-      this.started = Date.now()
-      this.currentTick = this.getNow()
-      this.recursiveInit()
-    }
+    this.init()
     const task = this.createTimeoutTask(callback, delay, args)
     this.registerTask(task)
     return task
@@ -109,11 +114,7 @@ export class TimingWheel {
     delay: number = 1,
     ...args: any[]
   ): IntervalTask {
-    if (this.count === 0) {
-      this.started = Date.now()
-      this.currentTick = this.getNow()
-      this.recursiveInit()
-    }
+    this.init()
     const task = this.createIntervalTask(callback, delay, args)
     this.registerTask(task)
     return task
