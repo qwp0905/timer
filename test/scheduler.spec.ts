@@ -1,11 +1,11 @@
-import { TimingWheel } from "../src/timing-wheel"
+import { TaskScheduler } from "../src/scheduler"
 
 describe("TimingWheel", () => {
-  let timingWheel: TimingWheel
+  let scheduler: TaskScheduler
 
   beforeEach(() => {
     jest.useFakeTimers()
-    timingWheel = new TimingWheel()
+    scheduler = new TaskScheduler()
   })
 
   afterEach(() => {
@@ -17,7 +17,7 @@ describe("TimingWheel", () => {
     const delay = 1000
     const args = ["arg1", "arg2"]
 
-    timingWheel.registerTimeout(callback, delay, ...args)
+    scheduler.setTimeout(callback, delay, ...args)
     expect(callback).not.toHaveBeenCalled()
 
     jest.advanceTimersByTime(delay - 1)
@@ -33,7 +33,7 @@ describe("TimingWheel", () => {
     const interval = 1000
     const args = ["arg1", "arg2"]
 
-    const intervalTask = timingWheel.registerInterval(callback, interval, ...args)
+    const intervalTask = scheduler.setInterval(callback, interval, ...args)
     expect(callback).not.toHaveBeenCalled()
 
     jest.advanceTimersByTime(interval)
@@ -44,18 +44,18 @@ describe("TimingWheel", () => {
     expect(callback).toHaveBeenCalledTimes(2)
     expect(callback).toHaveBeenCalledWith(...args)
 
-    timingWheel.unregisterTimeout(intervalTask)
+    scheduler.clearTimeout(intervalTask)
   })
 
   it("should cancel timeout task when unregistered", () => {
     const callback = jest.fn()
     const delay = 1000
 
-    const task = timingWheel.registerTimeout(callback, delay)
+    const task = scheduler.setTimeout(callback, delay)
     expect(callback).not.toHaveBeenCalled()
 
     // 타이머 취소
-    timingWheel.unregisterTimeout(task)
+    scheduler.clearTimeout(task)
 
     // 시간이 지나도 실행되지 않음
     jest.advanceTimersByTime(delay + 100)
@@ -66,12 +66,12 @@ describe("TimingWheel", () => {
     const callback = jest.fn()
     const interval = 1000
 
-    const task = timingWheel.registerInterval(callback, interval)
+    const task = scheduler.setInterval(callback, interval)
 
     jest.advanceTimersByTime(interval)
     expect(callback).toHaveBeenCalledTimes(1)
 
-    timingWheel.unregisterTimeout(task)
+    scheduler.clearTimeout(task)
 
     jest.advanceTimersByTime(interval * 2)
     expect(callback).toHaveBeenCalledTimes(1)
@@ -82,12 +82,12 @@ describe("TimingWheel", () => {
     const interval = 1000
     let count = 0
     const maxCount = 3
-    const task = timingWheel.registerInterval(
+    const task = scheduler.setInterval(
       (callback = jest.fn(() => {
         if (++count < maxCount) {
           return
         }
-        timingWheel.unregisterTimeout(task)
+        scheduler.clearTimeout(task)
       })),
       interval
     )
@@ -120,13 +120,13 @@ describe("TimingWheel", () => {
 
   it("should execute timeout immediately when delay under 1", () => {
     const callback = jest.fn()
-    timingWheel.registerTimeout(callback)
+    scheduler.setTimeout(callback)
     expect(callback).toHaveBeenCalledTimes(0)
 
     jest.advanceTimersByTime(1)
     expect(callback).toHaveBeenCalledTimes(1)
 
-    timingWheel.registerTimeout(callback, -1000)
+    scheduler.setTimeout(callback, -1000)
     expect(callback).toHaveBeenCalledTimes(1)
 
     jest.advanceTimersByTime(1)
@@ -135,7 +135,7 @@ describe("TimingWheel", () => {
 
   it("should execute interval immediately when delay under 1", () => {
     const callback = jest.fn()
-    let task = timingWheel.registerInterval(callback)
+    let task = scheduler.setInterval(callback)
     expect(callback).toHaveBeenCalledTimes(0)
 
     jest.advanceTimersByTime(1)
@@ -149,7 +149,7 @@ describe("TimingWheel", () => {
 
     task.close()
 
-    task = timingWheel.registerInterval(callback, -1000)
+    task = scheduler.setInterval(callback, -1000)
     expect(callback).toHaveBeenCalledTimes(3)
 
     jest.advanceTimersByTime(1)

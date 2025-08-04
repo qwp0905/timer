@@ -7,14 +7,14 @@ if (!Symbol.dispose) {
 }
 
 import { spawn } from "child_process"
-import { TimingWheel } from "../src/timing-wheel"
+import { TaskScheduler } from "../src/scheduler"
 
 describe("Task", () => {
-  let timingWheel: TimingWheel
+  let scheduler: TaskScheduler
 
   beforeEach(() => {
     jest.useFakeTimers()
-    timingWheel = new TimingWheel()
+    scheduler = new TaskScheduler()
   })
 
   afterEach(() => {
@@ -25,7 +25,7 @@ describe("Task", () => {
     const callback = jest.fn()
     const delay = 1000
 
-    const task = timingWheel.registerTimeout(callback, delay)
+    const task = scheduler.setTimeout(callback, delay)
     expect(callback).not.toHaveBeenCalled()
     jest.advanceTimersByTime(delay - 1)
     expect(callback).not.toHaveBeenCalled()
@@ -40,7 +40,7 @@ describe("Task", () => {
     const callback = jest.fn()
     const delay = 1000
 
-    const task = timingWheel.registerTimeout(callback, delay)
+    const task = scheduler.setTimeout(callback, delay)
     expect(callback).not.toHaveBeenCalled()
 
     jest.advanceTimersByTime(delay - 1)
@@ -59,7 +59,7 @@ describe("Task", () => {
     const callback = jest.fn()
     const interval = 1000
 
-    const task = timingWheel.registerInterval(callback, interval)
+    const task = scheduler.setInterval(callback, interval)
     expect(callback).not.toHaveBeenCalled()
 
     jest.advanceTimersByTime(interval - 1)
@@ -84,7 +84,7 @@ describe("Task", () => {
     const callback = jest.fn()
     const interval = 1000
 
-    const task = timingWheel.registerInterval(callback, interval)
+    const task = scheduler.setInterval(callback, interval)
     expect(callback).not.toHaveBeenCalled()
 
     jest.advanceTimersByTime(interval - 1)
@@ -109,7 +109,7 @@ describe("Task", () => {
     const delay = 1000
 
     {
-      using timer = timingWheel.registerTimeout(callback, delay)
+      using timer = scheduler.setTimeout(callback, delay)
       expect(callback).not.toHaveBeenCalled()
       jest.advanceTimersByTime(delay - 1)
       expect(timer).not.toBeNull()
@@ -144,9 +144,9 @@ describe("Task", () => {
       })
       prc.on("error", (err) => reject(err))
       prc.stdin.write(`
-import {TimingWheel} from "${__dirname}/../src/timing-wheel"
-const timingWheel = new TimingWheel()
-timingWheel.registerTimeout(() => {
+import {${TaskScheduler.name}} from "${__dirname}/../src/scheduler"
+const timingWheel = new ${TaskScheduler.name}()
+timingWheel.${TaskScheduler.prototype.setTimeout.name}(() => {
   console.log("123123123123")
 }, 1000).unref()
 `)
@@ -181,9 +181,9 @@ timingWheel.registerTimeout(() => {
       prc.on("error", (err) => reject(err))
 
       prc.stdin.write(`
-import {TimingWheel} from "${__dirname}/../src/timing-wheel"
-const timingWheel = new TimingWheel()
-timingWheel.registerTimeout(() => {
+import {${TaskScheduler.name}} from "${__dirname}/../src/scheduler"
+const timingWheel = new ${TaskScheduler.name}()
+timingWheel.${TaskScheduler.prototype.setTimeout.name}(() => {
   console.log("${result}")
 }, 1000)
 `)
@@ -194,20 +194,20 @@ timingWheel.registerTimeout(() => {
   })
 
   it("should be true by default", () => {
-    const task = timingWheel.registerTimeout(() => {}, 1000)
+    const task = scheduler.setTimeout(() => {}, 1000)
     expect(task.hasRef()).toBe(true)
     task.close()
   })
 
   it("should be false when unrefed", () => {
-    const task = timingWheel.registerTimeout(() => {}, 1000)
+    const task = scheduler.setTimeout(() => {}, 1000)
     task.unref()
     expect(task.hasRef()).toBe(false)
     task.close()
   })
 
   it("should be true when refed", () => {
-    const task = timingWheel.registerTimeout(() => {}, 1000)
+    const task = scheduler.setTimeout(() => {}, 1000)
     task.unref()
     task.ref()
     expect(task.hasRef()).toBe(true)
@@ -215,7 +215,7 @@ timingWheel.registerTimeout(() => {
   })
 
   it("should not effect when multiple ref/unref called", () => {
-    const task = timingWheel.registerInterval(() => {}, 1000)
+    const task = scheduler.setInterval(() => {}, 1000)
     task.unref()
     expect(task.hasRef()).toBe(false)
     task.unref()
@@ -234,13 +234,13 @@ timingWheel.registerTimeout(() => {
   })
 
   it("should return id typeof number", () => {
-    const task = timingWheel.registerTimeout(() => {}, 1000)
+    const task = scheduler.setTimeout(() => {}, 1000)
     expect(task.getId()).not.toBeNaN()
     task.close()
   })
 
   it("should convert to number", () => {
-    const task = timingWheel.registerTimeout(() => {}, 1000)
+    const task = scheduler.setTimeout(() => {}, 1000)
     expect(+task).not.toBeNaN()
     task.close()
   })

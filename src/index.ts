@@ -1,19 +1,19 @@
-import { TimingWheel } from "./timing-wheel"
+import { TaskScheduler } from "./scheduler"
 import { promisify } from "util"
 
-export let globalTimer: TimingWheel
+export let globalScheduler: TaskScheduler
 
 export function setGlobalTimers() {
-  globalTimer = new TimingWheel()
+  globalScheduler = new TaskScheduler()
 
-  const registerTimeout = globalTimer.registerTimeout.bind(globalTimer)
-  const registerInterval = globalTimer.registerInterval.bind(globalTimer)
-  const unregisterTimeout = globalTimer.unregisterTimeout.bind(globalTimer)
+  const registerTimeout = globalScheduler.setTimeout.bind(globalScheduler)
+  const registerInterval = globalScheduler.setInterval.bind(globalScheduler)
+  const unregisterTimeout = globalScheduler.clearTimeout.bind(globalScheduler)
   Object.defineProperty(registerTimeout, promisify.custom, {
     get() {
       return (delay: number, ...args: any[]) => {
         return new Promise((resolve) => {
-          globalTimer.registerTimeout(resolve, delay, ...args)
+          globalScheduler.setTimeout(resolve, delay, ...args)
         })
       }
     }
@@ -22,8 +22,8 @@ export function setGlobalTimers() {
   global.setTimeout = registerTimeout as unknown as typeof global.setTimeout
   global.clearTimeout = unregisterTimeout as unknown as typeof global.clearTimeout
   global.setInterval = registerInterval as unknown as typeof global.setInterval
-  global.clearInterval = globalTimer.unregisterTimeout.bind(
-    globalTimer
+  global.clearInterval = globalScheduler.clearTimeout.bind(
+    globalScheduler
   ) as unknown as typeof global.clearInterval
 }
 
@@ -38,3 +38,5 @@ export function clearGlobalTimers() {
   global.setInterval = globalSetInterval
   global.clearInterval = globalClearInterval
 }
+
+export { TaskScheduler }

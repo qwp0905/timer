@@ -154,12 +154,12 @@ clearGlobalTimers()
 ### Direct TimingWheel Usage
 
 ```typescript
-import { TimingWheel } from "timer"
+import { TaskScheduler } from "timer"
 
-const wheel = new TimingWheel()
+const scheduler = new TaskScheduler()
 
 // Register a timeout
-const timeout = wheel.registerTimeout(() => {
+const timeout = scheduler.setTimeout(() => {
   console.log("Timeout executed!")
 }, 1000)
 
@@ -171,13 +171,13 @@ timeout.unref() // Allow process to exit if this is the only timer
 timeout.refresh()
 
 // Register an interval
-const interval = wheel.registerInterval(() => {
+const interval = scheduler.setInterval(() => {
   console.log("Interval executed!")
 }, 2000)
 
 // Cancel timers
-timeout.close() // or wheel.unregisterTimeout(timeout)
-interval.close() // or wheel.unregisterTimeout(interval)
+timeout.close() // or scheduler.clearTimeout(timeout)
+interval.close() // or scheduler.clearInterval(interval)
 ```
 
 ### Using with Promises

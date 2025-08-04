@@ -2,7 +2,7 @@ import { BucketLayer } from "./layers"
 import { IntervalTask, TimeoutTask } from "./task"
 import { convertToIndex } from "./utils"
 
-export class TimingWheel {
+export class TaskScheduler {
   private readonly layers: BucketLayer[] = []
   private started = Date.now()
   private currentTick: number = this.getNow()
@@ -47,7 +47,7 @@ export class TimingWheel {
       beforeRef: (task) => ref.deref()?.beforeRef(task),
       beforeUnref: (task) => ref.deref()?.beforeUnref(task),
       register: (task) => ref.deref()?.registerTask(task),
-      unregister: (task) => ref.deref()?.unregisterTimeout(task),
+      unregister: (task) => ref.deref()?.clearTimeout(task),
       getNow: () => ref.deref()!.getNow()
     })
   }
@@ -62,7 +62,7 @@ export class TimingWheel {
       beforeRef: (task) => ref.deref()?.beforeRef(task),
       beforeUnref: (task) => ref.deref()?.beforeUnref(task),
       register: (task) => ref.deref()?.registerTask(task),
-      unregister: (task) => ref.deref()?.unregisterTimeout(task),
+      unregister: (task) => ref.deref()?.clearTimeout(task),
       getNow: () => ref.deref()!.getNow()
     })
   }
@@ -83,11 +83,11 @@ export class TimingWheel {
   private registerTask(task: TimeoutTask) {
     this.refedCount += task.refCount()
 
-    const layer = task.getLayer()
-    while (this.layers.length <= layer) {
+    const index = task.getLayer()
+    while (this.layers.length <= index) {
       this.layers.push(new BucketLayer(this.layers.length))
     }
-    this.layers[layer].insert(task)
+    this.layers[index].insert(task)
   }
 
   private init() {
@@ -99,38 +99,33 @@ export class TimingWheel {
     this.recursiveInit()
   }
 
-  registerTimeout(
-    callback: (...args: any[]) => any,
-    delay: number = 1,
-    ...args: any[]
-  ): TimeoutTask {
+  setTimeout(callback: (...args: any[]) => any, delay: number = 1, ...args: any[]): TimeoutTask {
     this.init()
     const task = this.createTimeoutTask(callback, delay, args)
     this.registerTask(task)
     return task
   }
-  registerInterval(
-    callback: (...args: any[]) => any,
-    delay: number = 1,
-    ...args: any[]
-  ): IntervalTask {
+  setInterval(callback: (...args: any[]) => any, delay: number = 1, ...args: any[]): IntervalTask {
     this.init()
     const task = this.createIntervalTask(callback, delay, args)
     this.registerTask(task)
     return task
   }
 
-  unregisterTimeout(task: TimeoutTask) {
+  clearTimeout(task: TimeoutTask) {
     task.markAsClosed()
-    for (let layer = 0; layer < this.layers.length; layer += 1) {
-      const buckets = this.layers[layer]
-      if (!buckets.remove(task)) {
+    for (let i = 0; i < this.layers.length; i += 1) {
+      const layer = this.layers[i]
+      if (!layer.remove(task)) {
         continue
       }
 
       this.refedCount -= task.refCount()
       return
     }
+  }
+  clearInterval(task: IntervalTask) {
+    return this.clearTimeout(task)
   }
 
   private tick() {
@@ -140,14 +135,14 @@ export class TimingWheel {
       const current = this.currentTick + 1
       const indexes = convertToIndex(current)
 
-      layerLoop: for (let layer = this.layers.length - 1; layer >= 0; layer -= 1) {
-        const buckets = this.layers[layer]
+      layerLoop: for (let i = this.layers.length - 1; i >= 0; i -= 1) {
+        const layer = this.layers[i]
         for (const task of dropdown) {
-          buckets.insert(task)
+          layer.insert(task)
         }
 
-        const index = indexes.at(layer)!
-        const tasks = buckets.dropdown(index)
+        const index = indexes.at(i)!
+        const tasks = layer.dropdown(index)
         if (!tasks) {
           dropdown.clear()
           continue layerLoop
