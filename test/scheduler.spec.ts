@@ -54,10 +54,8 @@ describe("TimingWheel", () => {
     const task = scheduler.setTimeout(callback, delay)
     expect(callback).not.toHaveBeenCalled()
 
-    // 타이머 취소
     scheduler.clearTimeout(task)
 
-    // 시간이 지나도 실행되지 않음
     jest.advanceTimersByTime(delay + 100)
     expect(callback).not.toHaveBeenCalled()
   })
