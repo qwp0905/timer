@@ -1,23 +1,23 @@
 import { clearGlobalTimers, setGlobalTimers } from "../src"
 import { promisify } from "util"
 
-// 벤치마크 설정
-const COUNT = 1_000_000 // 각 트라이얼 당 타이머 수
-const TRIALS = 5 // 각 테스트 당 트라이얼 수
+// Benchmark configuration
+const COUNT = 1_000_000 // Number of timers per trial
+const TRIALS = 5 // Number of trials per test
 
-// 트라이얼 결과 인터페이스
+// Trial result interface
 interface TrialResult {
-  setTimeoutTime: number // setTimeout 실행 시간(ms)
-  setTimeoutOps: number // setTimeout ops/ms
-  clearTimeoutTime: number // clearTimeout 실행 시간(ms)
-  clearTimeoutOps: number // clearTimeout ops/ms
-  memoryUsage: number // 메모리 사용량(MB)
+  setTimeoutTime: number // setTimeout execution time (ms)
+  setTimeoutOps: number // setTimeout operations per ms
+  clearTimeoutTime: number // clearTimeout execution time (ms)
+  clearTimeoutOps: number // clearTimeout operations per ms
+  memoryUsage: number // Memory usage (MB)
 }
 
-// 테스트 결과 인터페이스
+// Test results interface
 interface TestResults {
-  name: string // 테스트 이름 (Native/TimingWheel)
-  trials: TrialResult[] // 각 트라이얼 결과
+  name: string // Test name (Native/TimingWheel)
+  trials: TrialResult[] // Individual trial results
   averageSetTimeoutTime: number
   averageSetTimeoutOps: number
   averageClearTimeoutTime: number
@@ -25,12 +25,12 @@ interface TestResults {
   averageMemoryUsage: number
 }
 
-// 단일 트라이얼 실행
+// Run a single trial
 async function runTrial(): Promise<TrialResult> {
   const arr: any[] = []
   const startMem = process.memoryUsage().heapUsed
 
-  // setTimeout 벤치마크
+  // setTimeout benchmark
   const setTimeoutStart = performance.now()
   for (let i = 0; i < COUNT; i++) {
     const timeout = setTimeout(() => {}, Math.floor(1000 + Math.random() * 10000000))
@@ -40,7 +40,7 @@ async function runTrial(): Promise<TrialResult> {
   const setTimeoutTime = setTimeoutEnd - setTimeoutStart
   const setTimeoutOps = COUNT / setTimeoutTime
 
-  // clearTimeout 벤치마크
+  // clearTimeout benchmark
   const clearTimeoutStart = performance.now()
   for (const timer of arr) {
     clearTimeout(timer)
@@ -49,10 +49,10 @@ async function runTrial(): Promise<TrialResult> {
   const clearTimeoutTime = clearTimeoutEnd - clearTimeoutStart
   const clearTimeoutOps = COUNT / clearTimeoutTime
 
-  // 메모리 사용량 계산
+  // Calculate memory usage
   const memoryUsage = Math.round((process.memoryUsage().heapUsed - startMem) / 1024 ** 2)
 
-  // 배열 비우기
+  // Clear the array
   arr.length = 0
 
   return {
@@ -64,12 +64,12 @@ async function runTrial(): Promise<TrialResult> {
   }
 }
 
-// 각 타이머 구현에 대한 테스트 실행
+// Run tests for each timer implementation
 async function runTest(useNative: boolean): Promise<TestResults> {
   const testName = useNative ? "Native Timers" : "Timing Wheel"
   console.log(`\n[${testName}]`)
 
-  // 적절한 타이머 구현 설정
+  // Set the appropriate timer implementation
   if (useNative) {
     clearGlobalTimers()
   } else {
@@ -91,7 +91,7 @@ async function runTest(useNative: boolean): Promise<TestResults> {
     )
     console.log(`  Memory usage: ${result.memoryUsage} MB`)
 
-    // GC 호출 및 대기
+    // Call GC and wait
     if (i < TRIALS - 1) {
       console.log("  Triggering GC and waiting...")
       gc?.()
@@ -99,7 +99,7 @@ async function runTest(useNative: boolean): Promise<TestResults> {
     }
   }
 
-  // 평균 계산
+  // Calculate averages
   const averageSetTimeoutTime =
     trials.reduce((sum, trial) => sum + trial.setTimeoutTime, 0) / TRIALS
   const averageSetTimeoutOps = trials.reduce((sum, trial) => sum + trial.setTimeoutOps, 0) / TRIALS
@@ -120,7 +120,7 @@ async function runTest(useNative: boolean): Promise<TestResults> {
   }
 }
 
-// 결과 출력 함수
+// Print results function
 function printResults(timingWheelResults: TestResults, nativeResults: TestResults) {
   console.log("\n====================================================================")
   console.log("BENCHMARK RESULTS")
@@ -140,7 +140,7 @@ function printResults(timingWheelResults: TestResults, nativeResults: TestResult
   printTestResults(timingWheelResults)
   printTestResults(nativeResults)
 
-  // 개선율 계산
+  // Calculate improvement rates
   const setTimeoutImprovement =
     ((nativeResults.averageSetTimeoutTime - timingWheelResults.averageSetTimeoutTime) /
       nativeResults.averageSetTimeoutTime) *
@@ -162,38 +162,38 @@ function printResults(timingWheelResults: TestResults, nativeResults: TestResult
   )
 }
 
-// 전체 벤치마크 실행
+// Run the complete benchmark
 async function runBenchmark() {
   console.log(`Running benchmark with ${COUNT.toLocaleString()} timers, ${TRIALS} trials per test`)
 
-  // TimingWheel 테스트
+  // TimingWheel test
   const timingWheelResults = await runTest(false)
 
-  // GC 실행 및 대기
+  // Run GC and wait
   console.log("\n--------------------------------------------------------------------")
   console.log("Garbage collection triggered. Waiting for 10 seconds...")
   console.log("--------------------------------------------------------------------")
   gc?.()
   await promisify(setTimeout)(10000)
 
-  // Native 타이머 테스트
+  // Native timer test
   const nativeResults = await runTest(true)
 
-  // 결과 출력
+  // Print results
   printResults(timingWheelResults, nativeResults)
 
-  // 네이티브 타이머로 복원
+  // Restore native timers
   clearGlobalTimers()
 }
 
-// 프로세스 종료 시그널 처리
+// Handle process termination signals
 process.on("SIGINT", () => {
   console.log("\nBenchmark interrupted. Cleaning up...")
   clearGlobalTimers()
   process.exit(0)
 })
 
-// 벤치마크 실행
+// Run the benchmark
 runBenchmark().catch((err) => {
   console.error("Benchmark failed:", err)
   clearGlobalTimers()
