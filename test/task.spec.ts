@@ -8,6 +8,10 @@ if (!Symbol.dispose) {
 
 import { spawn } from "child_process"
 import { TaskScheduler } from "../src/scheduler"
+import { TimeoutTask } from "../src/task"
+import { resolve } from "path"
+
+const schedulerPath = resolve(__dirname, "../src/scheduler")
 
 describe("Task", () => {
   let scheduler: TaskScheduler
@@ -125,6 +129,8 @@ describe("Task", () => {
     jest.useRealTimers()
     const result = ""
 
+    const schedulerName = "scheduler"
+
     const p = new Promise((resolve, reject) => {
       const prc = spawn("yarn", ["ts-node"])
       let buffered = ""
@@ -144,11 +150,11 @@ describe("Task", () => {
       })
       prc.on("error", (err) => reject(err))
       prc.stdin.write(`
-import {${TaskScheduler.name}} from "${__dirname}/../src/scheduler"
-const timingWheel = new ${TaskScheduler.name}()
-timingWheel.${TaskScheduler.prototype.setTimeout.name}(() => {
+import {${TaskScheduler.name}} from "${schedulerPath}"
+const ${schedulerName} = new ${TaskScheduler.name}()
+${schedulerName}.${TaskScheduler.prototype.setTimeout.name}(() => {
   console.log("123123123123")
-}, 1000).unref()
+}, 1000).${TimeoutTask.prototype.unref.name}()
 `)
       prc.stdin.end()
     })
@@ -160,6 +166,8 @@ timingWheel.${TaskScheduler.prototype.setTimeout.name}(() => {
     jest.useRealTimers()
     const result = "result"
 
+    const schedulerName = "scheduler"
+
     const p = new Promise((resolve, reject) => {
       const prc = spawn("yarn", ["ts-node"])
       let buffered = ""
@@ -181,9 +189,9 @@ timingWheel.${TaskScheduler.prototype.setTimeout.name}(() => {
       prc.on("error", (err) => reject(err))
 
       prc.stdin.write(`
-import {${TaskScheduler.name}} from "${__dirname}/../src/scheduler"
-const timingWheel = new ${TaskScheduler.name}()
-timingWheel.${TaskScheduler.prototype.setTimeout.name}(() => {
+import {${TaskScheduler.name}} from "${schedulerPath}"
+const ${schedulerName} = new ${TaskScheduler.name}()
+${schedulerName}.${TaskScheduler.prototype.setTimeout.name}(() => {
   console.log("${result}")
 }, 1000)
 `)
