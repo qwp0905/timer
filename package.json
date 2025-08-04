@@ -9,7 +9,8 @@
   "scripts": {
     "build": "tsc -b tsconfig.build.json",
     "test": "jest",
-    "test:cov": "jest --coverage"
+    "test:cov": "jest --coverage",
+    "bench": "node -r ts-node/register --expose-gc --max-old-space-size=8092 bench/index.ts"
   },
   "devDependencies": {
     "@types/jest": "^29.5.14",

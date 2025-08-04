@@ -29,6 +29,9 @@ export class TaskScheduler {
   }
   private recursiveInit() {
     const immediate = setImmediate(this.perEventLoop)
+    if (this.layers.length === 0) {
+      return
+    }
     if (this.refedCount > 0) {
       return
     }

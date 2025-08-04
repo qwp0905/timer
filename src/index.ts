@@ -1,11 +1,9 @@
 import { TaskScheduler } from "./scheduler"
 import { promisify } from "util"
 
-export let globalScheduler: TaskScheduler
+export const globalScheduler = new TaskScheduler()
 
 export function setGlobalTimers() {
-  globalScheduler = new TaskScheduler()
-
   const registerTimeout = globalScheduler.setTimeout.bind(globalScheduler)
   const registerInterval = globalScheduler.setInterval.bind(globalScheduler)
   const unregisterTimeout = globalScheduler.clearTimeout.bind(globalScheduler)
