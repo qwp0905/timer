@@ -17,7 +17,5 @@ jobs:
           cache: "yarn"
       - run: yarn install --immutable
       - run: yarn build
-      - run: yarn config set -H "npmRegistries['//npm.pkg.github.com'].npmAuthToken" "$GITHUB_TOKEN"
-        env:
-          GITHUB_TOKEN: ${{ secrets.NPM_SECRET }}
+      - run: yarn config set -H "npmRegistries['//npm.pkg.github.com'].npmAuthToken" "${{ secrets.GITHUB_TOKEN }}"
       - run: yarn npm publish --access public
