@@ -15,6 +15,6 @@ jobs:
         with:
           node-version: 22.18.0
           cache: "yarn"
-      - run: yarn install --immutable --immutable-cache --check-cache
+      - run: yarn install --immutable
       - run: yarn build --if-present
       - run: yarn test:cov
