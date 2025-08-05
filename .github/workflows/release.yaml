@@ -1,0 +1,23 @@
+name: Release Package
+
+on:
+  push:
+    branches: ["main"]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.18.0
+      - run: yarn install --immutable --immutable-cache --check-cache
+      - run: yarn build --if-present
+
+      - run: npm config set -H "npmRegistries['//npm.pkg.github.com'].npmAuthToken"
+        env:
+          GITHUB_TOKEN: ${{ secrets.NPM_SECRET }}
+      - run: yarn npm publish --access public
