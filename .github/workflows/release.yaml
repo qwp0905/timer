@@ -15,7 +15,6 @@ jobs:
         with:
           node-version: 22.18.0
       - run: yarn install --immutable
-      - run: yarn build --if-present
 
       - run: npm config set -H "npmRegistries['//npm.pkg.github.com'].npmAuthToken"
         env:
