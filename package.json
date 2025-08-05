@@ -1,6 +1,6 @@
 {
   "name": "timer",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "main": "src/index.ts",
   "repository": "git@github.com:qwp0905/lru-cache.git",
   "author": "qwp0905 <qwp0905@gmail.com>",
