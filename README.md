@@ -224,8 +224,9 @@ Tests with 1 million timers show significant performance improvements over nativ
 | ------------------ | -------------- | ------------ | ----------- |
 | Timer Creation     | 1076ms         | 560ms        | ~48% faster |
 | Timer Cancellation | 374ms          | 245ms        | ~34% faster |
+| Memory Usage       | Lower          | Higher       | Trade-off   |
 
-Performance advantage increases with the number of active timers.
+Performance advantage increases with the number of active timers. The implementation prioritizes execution speed over memory efficiency, making it ideal for high-throughput applications where timer performance is critical.
 
 ## License
 
