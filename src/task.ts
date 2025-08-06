@@ -64,12 +64,9 @@ export class TimeoutTask implements NodeJS.Timeout {
     if (this.closed) {
       return this
     }
+    this.closed = true
     this.unregister(this)
     return this
-  }
-
-  markAsClosed() {
-    this.closed = true
   }
 
   hasRef(): boolean {
@@ -115,7 +112,7 @@ export class TimeoutTask implements NodeJS.Timeout {
     return this.indexes.at(at)
   }
 
-  getLayer() {
+  getMaxLayer() {
     return this.indexes.length - 1
   }
 
