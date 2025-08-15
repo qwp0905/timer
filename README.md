@@ -222,8 +222,8 @@ Tests with 1 million timers show significant performance improvements over nativ
 
 | Operation          | Native Node.js | Timing Wheel  | Improvement |
 | ------------------ | -------------- | ------------- | ----------- |
-| Timer Creation     | 974 ops/ms     | 1,797 ops/ms  | ~47% faster |
-| Timer Cancellation | 3,137 ops/ms   | 17,556 ops/ms | ~80% faster |
+| Timer Creation     | 995 ops/ms     | 1,700 ops/ms  | ~41% faster |
+| Timer Cancellation | 3,317 ops/ms   | 12,914 ops/ms | ~74% faster |
 | Memory Usage       | Lower          | Higher        | ~10% more   |
 
 Performance advantage increases with the number of active timers. The implementation prioritizes execution speed over memory efficiency, making it ideal for high-throughput applications where timer performance is critical.
