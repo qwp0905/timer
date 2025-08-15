@@ -1,9 +1,9 @@
 import { convertToIndex } from "./utils"
 
-export interface CreateTaskOptions {
+export interface CreateTaskOptions<T extends any[] = any[], R = any> {
   id: number
-  _onTimeout: (...args: any[]) => any
-  args: any[]
+  _onTimeout: (...args: T) => R
+  args: T
   delay: number
   beforeRef: (task: TimeoutTask) => void
   beforeUnref: (task: TimeoutTask) => void
@@ -12,7 +12,8 @@ export interface CreateTaskOptions {
   getNow: () => number
 }
 
-export interface ITask extends NodeJS.Timeout {
+export interface ITask<T extends any[] = any[], R = any> extends NodeJS.Timeout {
+  _onTimeout: (...args: T) => R
   refreshDate(): void
   execute(): any
   getExecutionTime(): number
@@ -24,16 +25,16 @@ export interface ITask extends NodeJS.Timeout {
   getId(): number
 }
 
-export class TimeoutTask implements ITask {
+export class TimeoutTask<T extends any[] = any[], R = any> implements ITask<T, R> {
   protected readonly id: number
   protected indexes: number[]
   protected closed = false
   protected refed = true
-  protected readonly args: any[]
+  protected readonly args: T
   protected readonly delay: number
   protected scheduledAt: number
 
-  readonly _onTimeout: (...args: any[]) => any
+  readonly _onTimeout: (...args: T) => R
 
   protected readonly beforeRef: (task: TimeoutTask) => void
   protected readonly beforeUnref: (task: TimeoutTask) => void
@@ -51,7 +52,7 @@ export class TimeoutTask implements ITask {
     register,
     unregister,
     getNow
-  }: CreateTaskOptions) {
+  }: CreateTaskOptions<T, R>) {
     this.id = id
     this._onTimeout = _onTimeout
     this.args = args
@@ -142,7 +143,10 @@ export class TimeoutTask implements ITask {
   }
 }
 
-export class IntervalTask extends TimeoutTask implements ITask {
+export class IntervalTask<T extends any[] = any[], R = any>
+  extends TimeoutTask<T, R>
+  implements ITask<T, R>
+{
   afterTaskRun(): void {
     if (this.closed) {
       return

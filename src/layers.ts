@@ -24,19 +24,4 @@ export class BucketLayer {
     }
     this.size += 1
   }
-
-  remove(task: ITask) {
-    const index = task.getIndex(this.layerNumber)!
-    const tasks = this.buckets[index]
-    if (!tasks?.delete(task)) {
-      return false
-    }
-
-    if (tasks.size === 0) {
-      this.buckets[index] = null
-    }
-
-    this.size -= 1
-    return true
-  }
 }

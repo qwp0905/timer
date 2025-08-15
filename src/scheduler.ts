@@ -38,7 +38,11 @@ export class TaskScheduler {
     immediate.unref()
   }
 
-  private createTimeoutTask(callback: ICallback, delay: number, args: any[]): TimeoutTask {
+  private createTimeoutTask<T extends any[] = [], R = any>(
+    callback: ICallback<T, R>,
+    delay: number,
+    args: T
+  ): TimeoutTask<T, R> {
     return new TimeoutTask({
       id: this.lastId++,
       _onTimeout: callback,
@@ -51,7 +55,11 @@ export class TaskScheduler {
       getNow: this.getNow
     })
   }
-  private createIntervalTask(callback: ICallback, interval: number, args: any[]): IntervalTask {
+  private createIntervalTask<T extends any[] = [], R = any>(
+    callback: ICallback<T, R>,
+    interval: number,
+    args: T
+  ): IntervalTask<T, R> {
     return new IntervalTask({
       id: this.lastId++,
       _onTimeout: callback,
@@ -105,21 +113,21 @@ export class TaskScheduler {
     this.recursiveInit()
   }
 
-  setTimeout<T extends any[] = []>(
-    callback: ICallback<T>,
+  setTimeout<T extends any[] = [], R = any>(
+    callback: ICallback<T, R>,
     delay: number = 1,
     ...args: T
-  ): TimeoutTask {
+  ): TimeoutTask<T, R> {
     this.init()
     const task = this.createTimeoutTask(callback, delay, args)
     this.registerTask(task)
     return task
   }
-  setInterval<T extends any[] = []>(
-    callback: ICallback<T>,
+  setInterval<T extends any[] = [], R = any>(
+    callback: ICallback<T, R>,
     delay: number = 1,
     ...args: T
-  ): IntervalTask {
+  ): IntervalTask<T, R> {
     this.init()
     const task = this.createIntervalTask(callback, delay, args)
     this.registerTask(task)
