@@ -5,6 +5,8 @@ import { promisify } from "util"
 const COUNT = 1_000_000 // Number of timers per trial
 const TRIALS = 5 // Number of trials per test
 
+const testSets = Array.from({ length: COUNT }, () => Math.floor(1000 + Math.random() * 10000000))
+
 // Trial result interface
 interface TrialResult {
   setTimeoutTime: number // setTimeout execution time (ms)
@@ -32,8 +34,8 @@ async function runTrial(): Promise<TrialResult> {
 
   // setTimeout benchmark
   const setTimeoutStart = performance.now()
-  for (let i = 0; i < COUNT; i++) {
-    const timeout = setTimeout(() => {}, Math.floor(1000 + Math.random() * 10000000))
+  for (const delay of testSets) {
+    const timeout = setTimeout(() => {}, delay)
     arr.push(timeout)
   }
   const setTimeoutEnd = performance.now()
@@ -166,8 +168,8 @@ function printResults(timingWheelResults: TestResults, nativeResults: TestResult
 async function runBenchmark() {
   console.log(`Running benchmark with ${COUNT.toLocaleString()} timers, ${TRIALS} trials per test`)
 
-  // TimingWheel test
-  const timingWheelResults = await runTest(false)
+  // Native timer test
+  const nativeResults = await runTest(true)
 
   // Run GC and wait
   console.log("\n--------------------------------------------------------------------")
@@ -176,8 +178,8 @@ async function runBenchmark() {
   gc?.()
   await promisify(setTimeout)(10000)
 
-  // Native timer test
-  const nativeResults = await runTest(true)
+  // TimingWheel test
+  const timingWheelResults = await runTest(false)
 
   // Print results
   printResults(timingWheelResults, nativeResults)

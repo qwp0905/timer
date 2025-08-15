@@ -5,7 +5,6 @@ export interface CreateTaskOptions {
   _onTimeout: (...args: any[]) => any
   args: any[]
   delay: number
-  scheduledAt: number
   beforeRef: (task: TimeoutTask) => void
   beforeUnref: (task: TimeoutTask) => void
   register: (task: TimeoutTask) => void
@@ -13,7 +12,19 @@ export interface CreateTaskOptions {
   getNow: () => number
 }
 
-export class TimeoutTask implements NodeJS.Timeout {
+export interface ITask extends NodeJS.Timeout {
+  refreshDate(): void
+  execute(): any
+  getExecutionTime(): number
+  getScheduledAt(): number
+  getIndex(at: number): number
+  getMaxLayer(): number
+  refCount(): number
+  afterTaskRun(): void
+  getId(): number
+}
+
+export class TimeoutTask implements ITask {
   protected readonly id: number
   protected indexes: number[]
   protected closed = false
@@ -35,7 +46,6 @@ export class TimeoutTask implements NodeJS.Timeout {
     _onTimeout,
     args,
     delay,
-    scheduledAt,
     beforeRef,
     beforeUnref,
     register,
@@ -46,7 +56,7 @@ export class TimeoutTask implements NodeJS.Timeout {
     this._onTimeout = _onTimeout
     this.args = args
     this.delay = Math.max(1, delay)
-    this.scheduledAt = scheduledAt
+    this.scheduledAt = getNow()
     this.beforeRef = beforeRef
     this.beforeUnref = beforeUnref
     this.register = register
@@ -80,7 +90,6 @@ export class TimeoutTask implements NodeJS.Timeout {
   }
 
   refresh(): this {
-    this.unregister(this)
     this.refreshDate()
     this.register(this)
     return this
@@ -108,8 +117,8 @@ export class TimeoutTask implements NodeJS.Timeout {
     return this.scheduledAt + this.delay
   }
 
-  getIndex(at: number) {
-    return this.indexes.at(at)
+  getIndex(at: number): number {
+    return this.indexes.at(at)!
   }
 
   getMaxLayer() {
@@ -133,7 +142,7 @@ export class TimeoutTask implements NodeJS.Timeout {
   }
 }
 
-export class IntervalTask extends TimeoutTask {
+export class IntervalTask extends TimeoutTask implements ITask {
   afterTaskRun(): void {
     if (this.closed) {
       return

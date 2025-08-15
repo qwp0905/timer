@@ -1,7 +1,7 @@
-import { TimeoutTask } from "./task"
+import { ITask } from "./task"
 
 export class BucketLayer {
-  private readonly buckets: (Set<TimeoutTask> | null)[] = []
+  private readonly buckets: (Set<ITask> | null)[] = []
   private size = 0
 
   constructor(private readonly layerNumber: number) {}
@@ -17,7 +17,7 @@ export class BucketLayer {
     return tasks
   }
 
-  insert(task: TimeoutTask) {
+  insert(task: ITask) {
     const tasks = (this.buckets[task.getIndex(this.layerNumber)!] ??= new Set())
     if (!tasks.add(task)) {
       return
@@ -25,7 +25,7 @@ export class BucketLayer {
     this.size += 1
   }
 
-  remove(task: TimeoutTask) {
+  remove(task: ITask) {
     const index = task.getIndex(this.layerNumber)!
     const tasks = this.buckets[index]
     if (!tasks?.delete(task)) {
