@@ -158,4 +158,14 @@ describe("TaskScheduler", () => {
 
     task.close()
   })
+
+  it("should delay can be less then max delay", () => {
+    const maxDelay = 0xffff_ffff
+    const callback = jest.fn()
+    const task = scheduler.setTimeout(callback, maxDelay + 1000)
+    expect(task.getExecutionTime()).toBe(maxDelay)
+    expect(callback).not.toHaveBeenCalled()
+
+    scheduler.clearTimeout(task)
+  })
 })
