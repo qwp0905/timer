@@ -24,9 +24,9 @@ export class TaskScheduler {
     if (this.count === 0) {
       return
     }
-    this.recursiveInit()
+    this.scheduleTicker()
   }
-  private recursiveInit() {
+  private scheduleTicker() {
     const immediate = setImmediate(this.perEventLoop)
     if (this.count === 0) {
       return
@@ -36,6 +36,15 @@ export class TaskScheduler {
     }
 
     immediate.unref()
+  }
+
+  private init() {
+    if (this.count > 0) {
+      return
+    }
+    this.started = Date.now()
+    this.currentTick = this.getNow()
+    this.scheduleTicker()
   }
 
   private createTimeoutTask<T extends any[] = [], R = any>(
@@ -104,15 +113,6 @@ export class TaskScheduler {
     this.refedCount -= task.refCount()
   }
 
-  private init() {
-    if (this.count > 0) {
-      return
-    }
-    this.started = Date.now()
-    this.currentTick = this.getNow()
-    this.recursiveInit()
-  }
-
   setTimeout<T extends any[] = [], R = any>(
     callback: ICallback<T, R>,
     delay: number = 1,
@@ -171,14 +171,15 @@ export class TaskScheduler {
       this.currentTick = current
 
       for (const task of dropdown) {
-        if (!this.tasks.has(task)) {
-          continue
-        }
         if (task.getExecutionTime() !== current) {
           continue
         }
+        if (!this.tasks.delete(task)) {
+          continue
+        }
+
         task.execute()
-        this.unregisterTask(task)
+        this.refedCount -= task.refCount()
         task.afterTaskRun()
       }
       dropdown.clear()
