@@ -1,6 +1,6 @@
 import { TaskScheduler } from "../src/scheduler"
 
-describe("TimingWheel", () => {
+describe("TaskScheduler", () => {
   let scheduler: TaskScheduler
 
   beforeEach(() => {
@@ -69,7 +69,7 @@ describe("TimingWheel", () => {
     jest.advanceTimersByTime(interval)
     expect(callback).toHaveBeenCalledTimes(1)
 
-    scheduler.clearTimeout(task)
+    scheduler.clearInterval(task)
 
     jest.advanceTimersByTime(interval * 2)
     expect(callback).toHaveBeenCalledTimes(1)
@@ -85,7 +85,7 @@ describe("TimingWheel", () => {
         if (++count < maxCount) {
           return
         }
-        scheduler.clearTimeout(task)
+        scheduler.clearInterval(task)
       })),
       interval
     )

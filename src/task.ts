@@ -56,7 +56,7 @@ export class TimeoutTask<T extends any[] = any[], R = any> implements ITask<T, R
     this.id = id
     this._onTimeout = _onTimeout
     this.args = args
-    this.delay = Math.max(1, delay)
+    this.delay = Math.max(1, delay) >>> 0
     this.scheduledAt = getNow()
     this.beforeRef = beforeRef
     this.beforeUnref = beforeUnref

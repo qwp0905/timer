@@ -4,6 +4,7 @@ import { promisify } from "util"
 // Benchmark configuration
 const COUNT = 1_000_000 // Number of timers per trial
 const TRIALS = 5 // Number of trials per test
+const GC_DELAY_PER_TRIAL = 3000
 
 const testSets = Array.from({ length: COUNT }, () => Math.floor(1000 + Math.random() * 10000000))
 
@@ -38,6 +39,10 @@ async function runTrial(): Promise<TrialResult> {
     const timeout = setTimeout(() => {}, delay)
     arr.push(timeout)
   }
+
+  // Calculate memory usage
+  const memoryUsage = Math.round((process.memoryUsage().heapUsed - startMem) / 1024 ** 2)
+
   const setTimeoutEnd = performance.now()
   const setTimeoutTime = setTimeoutEnd - setTimeoutStart
   const setTimeoutOps = COUNT / setTimeoutTime
@@ -50,9 +55,6 @@ async function runTrial(): Promise<TrialResult> {
   const clearTimeoutEnd = performance.now()
   const clearTimeoutTime = clearTimeoutEnd - clearTimeoutStart
   const clearTimeoutOps = COUNT / clearTimeoutTime
-
-  // Calculate memory usage
-  const memoryUsage = Math.round((process.memoryUsage().heapUsed - startMem) / 1024 ** 2)
 
   // Clear the array
   arr.length = 0
@@ -97,7 +99,7 @@ async function runTest(useNative: boolean): Promise<TestResults> {
     if (i < TRIALS - 1) {
       console.log("  Triggering GC and waiting...")
       gc?.()
-      await promisify(setTimeout)(2000)
+      await promisify(setTimeout)(GC_DELAY_PER_TRIAL)
     }
   }
 
@@ -168,8 +170,8 @@ function printResults(timingWheelResults: TestResults, nativeResults: TestResult
 async function runBenchmark() {
   console.log(`Running benchmark with ${COUNT.toLocaleString()} timers, ${TRIALS} trials per test`)
 
-  // Native timer test
-  const nativeResults = await runTest(true)
+  // TimingWheel test
+  const timingWheelResults = await runTest(false)
 
   // Run GC and wait
   console.log("\n--------------------------------------------------------------------")
@@ -178,8 +180,8 @@ async function runBenchmark() {
   gc?.()
   await promisify(setTimeout)(10000)
 
-  // TimingWheel test
-  const timingWheelResults = await runTest(false)
+  // Native timer test
+  const nativeResults = await runTest(true)
 
   // Print results
   printResults(timingWheelResults, nativeResults)

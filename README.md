@@ -220,11 +220,11 @@ This library is particularly valuable in these scenarios:
 
 Tests with 1 million timers show significant performance improvements over native Node.js timers:
 
-| Operation          | Native Node.js | Timing Wheel | Improvement |
-| ------------------ | -------------- | ------------ | ----------- |
-| Timer Creation     | 1049ms         | 555ms        | ~47% faster |
-| Timer Cancellation | 377ms          | 74ms         | ~80% faster |
-| Memory Usage       | Lower          | Higher       | Trade-off   |
+| Operation          | Native Node.js | Timing Wheel  | Improvement |
+| ------------------ | -------------- | ------------- | ----------- |
+| Timer Creation     | 974 ops/ms     | 1,797 ops/ms  | ~47% faster |
+| Timer Cancellation | 3,137 ops/ms   | 17,556 ops/ms | ~80% faster |
+| Memory Usage       | Lower          | Higher        | ~10% more   |
 
 Performance advantage increases with the number of active timers. The implementation prioritizes execution speed over memory efficiency, making it ideal for high-throughput applications where timer performance is critical.
 
