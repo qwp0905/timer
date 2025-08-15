@@ -2,6 +2,10 @@ import { BucketLayer } from "./layers"
 import { IntervalTask, ITask, TimeoutTask } from "./task"
 import { convertToIndex } from "./utils"
 
+interface ICallback<TArgs extends any[] = any[], TResult = any> {
+  (...args: TArgs): TResult
+}
+
 export class TaskScheduler {
   private readonly layers: BucketLayer[] = []
   private readonly tasks = new Set<ITask>()
@@ -34,7 +38,7 @@ export class TaskScheduler {
     immediate.unref()
   }
 
-  private createTimeoutTask(callback: () => any, delay: number, args: any[]): TimeoutTask {
+  private createTimeoutTask(callback: ICallback, delay: number, args: any[]): TimeoutTask {
     return new TimeoutTask({
       id: this.lastId++,
       _onTimeout: callback,
@@ -47,7 +51,7 @@ export class TaskScheduler {
       getNow: this.getNow
     })
   }
-  private createIntervalTask(callback: () => any, interval: number, args: any[]): IntervalTask {
+  private createIntervalTask(callback: ICallback, interval: number, args: any[]): IntervalTask {
     return new IntervalTask({
       id: this.lastId++,
       _onTimeout: callback,
@@ -101,13 +105,21 @@ export class TaskScheduler {
     this.recursiveInit()
   }
 
-  setTimeout(callback: (...args: any[]) => any, delay: number = 1, ...args: any[]): TimeoutTask {
+  setTimeout<T extends any[] = []>(
+    callback: ICallback<T>,
+    delay: number = 1,
+    ...args: T
+  ): TimeoutTask {
     this.init()
     const task = this.createTimeoutTask(callback, delay, args)
     this.registerTask(task)
     return task
   }
-  setInterval(callback: (...args: any[]) => any, delay: number = 1, ...args: any[]): IntervalTask {
+  setInterval<T extends any[] = []>(
+    callback: ICallback<T>,
+    delay: number = 1,
+    ...args: T
+  ): IntervalTask {
     this.init()
     const task = this.createIntervalTask(callback, delay, args)
     this.registerTask(task)
