@@ -143,25 +143,23 @@ export class TaskScheduler {
 
   private tick() {
     const now = this.getNow()
-    let dropdown = new Set<ITask>()
-    while (now > this.currentTick) {
-      const current = this.currentTick + 1
-      let indexes: number[] | null
-      const layers = this.layers.length
+    let dropdown: ITask[] = []
 
-      layerLoop: for (let i = layers - 1; i >= 0; i -= 1) {
+    for (let current = this.currentTick + 1; current <= now; current += 1) {
+      let indexes: number[] | null
+
+      layerLoop: for (let i = this.layers.length - 1; i >= 0; i -= 1) {
         const layer = this.layers[i]
-        if (layer.length === 0 && dropdown.size === 0) {
+        if (layer.length === 0 && dropdown.length === 0) {
           continue layerLoop
         }
-        for (const task of dropdown) {
-          layer.insert(task)
+        while (dropdown.length > 0) {
+          layer.insert(dropdown.pop()!)
         }
 
         const index = (indexes ??= convertToIndex(current)).at(i)!
         const tasks = layer.dropdown(index)
         if (!tasks) {
-          dropdown.clear()
           continue layerLoop
         }
 
@@ -172,9 +170,8 @@ export class TaskScheduler {
         this.layers.pop()
       }
 
-      this.currentTick = current
-
-      for (const task of dropdown) {
+      while (dropdown.length > 0) {
+        const task = dropdown.pop()!
         if (task.getExecutionTime() !== current) {
           continue
         }
@@ -186,7 +183,8 @@ export class TaskScheduler {
         this.refedCount -= task.refCount()
         task.afterTaskRun()
       }
-      dropdown.clear()
     }
+
+    this.currentTick = now
   }
 }

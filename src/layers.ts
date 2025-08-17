@@ -1,7 +1,7 @@
 import { ITask } from "./task"
 
 export class BucketLayer {
-  private readonly buckets: (Set<ITask> | null)[] = []
+  private readonly buckets: (ITask[] | null)[] = []
   private size = 0
 
   constructor(private readonly layerNumber: number) {}
@@ -13,14 +13,17 @@ export class BucketLayer {
   dropdown(index: number) {
     const tasks = this.buckets[index]
     this.buckets[index] = null
-    this.size -= tasks?.size ?? 0
+    this.size -= tasks?.length ?? 0
     return tasks
   }
 
   insert(task: ITask) {
-    const tasks = (this.buckets[task.getIndex(this.layerNumber)!] ??= new Set())
-    if (!tasks.add(task)) {
-      return
+    const index = task.getIndex(this.layerNumber)!
+    const tasks = this.buckets[index]
+    if (!tasks) {
+      this.buckets[index] = [task]
+    } else {
+      tasks.push(task)
     }
     this.size += 1
   }
