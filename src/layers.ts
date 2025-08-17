@@ -12,8 +12,12 @@ export class BucketLayer {
 
   dropdown(index: number) {
     const tasks = this.buckets[index]
+    if (!tasks) {
+      return null
+    }
+
     this.buckets[index] = null
-    this.size -= tasks?.length ?? 0
+    this.size -= tasks.length
     return tasks
   }
 
