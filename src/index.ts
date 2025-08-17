@@ -1,5 +1,4 @@
 import { TaskScheduler } from "./scheduler"
-import { promisify } from "util"
 
 export const globalScheduler = new TaskScheduler()
 
@@ -16,15 +15,18 @@ export function setGlobalTimers() {
   const unregisterInterval = globalScheduler.clearInterval.bind(
     globalScheduler
   ) as unknown as typeof global.clearInterval
-  Object.defineProperty(registerTimeout, promisify.custom, {
-    get() {
-      return (delay: number, ...args: any[]) => {
-        return new Promise((resolve) => {
-          registerTimeout(resolve, delay, ...args)
-        })
+  if (typeof process !== undefined) {
+    const { promisify } = require("util")
+    Object.defineProperty(registerTimeout, promisify.custom, {
+      get() {
+        return (delay: number, ...args: any[]) => {
+          return new Promise((resolve) => {
+            registerTimeout(resolve, delay, ...args)
+          })
+        }
       }
-    }
-  })
+    })
+  }
 
   global.setTimeout = registerTimeout
   global.clearTimeout = unregisterTimeout
