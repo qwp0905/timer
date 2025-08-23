@@ -1,4 +1,4 @@
-use std::time::SystemTime;
+use std::time::Instant;
 
 pub trait Timer {
   fn reset(&mut self);
@@ -6,21 +6,21 @@ pub trait Timer {
 }
 
 pub struct SystemTimer {
-  started_at: SystemTime,
+  started_at: Instant,
 }
 impl SystemTimer {
   pub fn new() -> Self {
     Self {
-      started_at: SystemTime::now(),
+      started_at: Instant::now(),
     }
   }
 }
 impl Timer for SystemTimer {
   fn now(&self) -> u32 {
-    self.started_at.elapsed().unwrap().as_millis() as u32
+    self.started_at.elapsed().as_millis() as u32
   }
 
   fn reset(&mut self) {
-    self.started_at = SystemTime::now();
+    self.started_at = Instant::now();
   }
 }
