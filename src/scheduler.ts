@@ -78,16 +78,24 @@ export class TaskScheduler {
     return task
   }
 
-  clearTimeout(task: number | Task<any, any>) {
+  clearTimeout(task: number | string | Task<any, any>) {
     if (typeof task === "number") {
       this.wheel.unregister(task)
       return
     }
+    if (typeof task === "string") {
+      this.wheel.unregister(Number(task))
+      return
+    }
     task.close()
   }
-  clearInterval(task: number | Task<any, any>) {
+  clearInterval(task: number | string | Task<any, any>) {
     if (typeof task === "number") {
       this.wheel.unregister(task)
+      return
+    }
+    if (typeof task === "string") {
+      this.wheel.unregister(Number(task))
       return
     }
     task.close()
