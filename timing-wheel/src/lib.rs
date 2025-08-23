@@ -7,6 +7,7 @@ mod constant;
 mod layer;
 mod pointer;
 mod task;
+mod timer;
 mod wheel;
 
 pub use wheel::TimingWheel;

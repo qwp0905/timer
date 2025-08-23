@@ -1,7 +1,6 @@
 use std::{
   collections::{HashMap, HashSet},
   ptr::NonNull,
-  time::SystemTime,
 };
 
 use napi::{Env, Result, bindgen_prelude::Function};
@@ -10,6 +9,7 @@ use crate::{
   layer::BucketLayer,
   pointer::Pointer,
   task::{Task, get_bucket_indexes},
+  timer::{SystemTimer, Timer},
 };
 
 #[napi]
@@ -17,7 +17,7 @@ pub struct TimingWheel {
   refs: HashSet<u32>,
   tasks: HashMap<u32, NonNull<Task>>,
   layers: Vec<BucketLayer>,
-  started_at: u128,
+  timer: Box<dyn Timer>,
   current_tick: u32,
 }
 
@@ -25,11 +25,15 @@ pub struct TimingWheel {
 impl TimingWheel {
   #[napi(constructor)]
   pub fn new() -> Self {
+    Self::with_timer(SystemTimer::new())
+  }
+
+  pub fn with_timer(timer: impl Timer + 'static) -> Self {
     Self {
       tasks: Default::default(),
       refs: Default::default(),
       layers: Vec::new(),
-      started_at: now(),
+      timer: Box::new(timer),
       current_tick: 0,
     }
   }
@@ -72,7 +76,7 @@ impl TimingWheel {
   fn register_task_ref(&mut self, task: NonNull<Task>) {
     let task_ref = task.refs();
     if self.tasks.is_empty() {
-      self.started_at = now();
+      self.timer.reset();
       self.current_tick = 0;
     }
 
@@ -88,7 +92,7 @@ impl TimingWheel {
 
   #[napi]
   pub fn refresh(&mut self, id: u32) {
-    let now = self.get_now();
+    let now = self.timer.now();
     self
       .tasks
       .get_mut(&id)
@@ -108,13 +112,13 @@ impl TimingWheel {
     is_interval: bool,
   ) -> Result<()> {
     if self.tasks.is_empty() {
-      self.started_at = now();
+      self.timer.reset();
       self.current_tick = 0;
     }
 
     let task = Task::new(
       id,
-      self.get_now(),
+      self.timer.now(),
       delay.max(1),
       callback.create_ref()?,
       is_interval,
@@ -134,7 +138,7 @@ impl TimingWheel {
 
   #[napi]
   pub fn tick(&mut self, env: Env) -> Result<()> {
-    let now = self.get_now();
+    let now = self.timer.now();
     let mut dropdown: Vec<NonNull<Task>> = Vec::new();
 
     for current in (self.current_tick + 1)..=now {
@@ -194,16 +198,4 @@ impl TimingWheel {
     self.current_tick = now;
     Ok(())
   }
-
-  #[inline]
-  pub fn get_now(&self) -> u32 {
-    (now() - self.started_at) as u32
-  }
-}
-
-fn now() -> u128 {
-  SystemTime::now()
-    .duration_since(SystemTime::UNIX_EPOCH)
-    .unwrap()
-    .as_millis()
 }
