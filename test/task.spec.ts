@@ -8,8 +8,9 @@ if (!Symbol.dispose) {
 
 import { spawn } from "child_process"
 import { TaskScheduler } from "../src/scheduler"
-import { TimeoutTask } from "../src/task"
+// import { TimeoutTask } from "../src/task"
 import { resolve } from "path"
+import { Task } from "../src/task"
 
 const schedulerPath = resolve(__dirname, "../src/scheduler")
 
@@ -154,7 +155,7 @@ import {${TaskScheduler.name}} from "${schedulerPath}"
 const ${schedulerName} = new ${TaskScheduler.name}()
 ${schedulerName}.${TaskScheduler.prototype.setTimeout.name}(() => {
   console.log("123123123123")
-}, 1000).${TimeoutTask.prototype.unref.name}()
+}, 1000).${Task.prototype.unref.name}()
 `)
       prc.stdin.end()
     })

@@ -31,10 +31,23 @@
   "code-runner.executorMap": {
     "typescript": "yarn ts-node"
   },
-  "jest.runMode": {
-    "type": "watch",
-    "coverage": true,
-    "runAllTestsOnStartup": true
+  "[rust]": {
+    "editor.defaultFormatter": "rust-lang.rust-analyzer"
   },
-  "jest.enable": true
+  "[toml]": {
+    "editor.defaultFormatter": "tamasfe.even-better-toml"
+  },
+  "rust-analyzer.rustfmt.rangeFormatting.enable": true,
+  "rust-analyzer.linkedProjects": [
+    "./timing-wheel/Cargo.toml"
+  ],
+  "rust-analyzer.showUnlinkedFileNotification": false,
+  "rust-analyzer.procMacro.enable": false,
+  "[jsonc]": {
+    "editor.quickSuggestions": {
+      "strings": true
+    },
+    "editor.suggest.insertMode": "replace",
+    "editor.defaultFormatter": "vscode.json-language-features"
+  },
 }

@@ -1,0 +1,18 @@
+[package]
+name = "timing-wheel"
+edition = "2024"
+version = "0.0.0"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+napi = "3.2.4"
+napi-derive = "3.2.4"
+
+[build-dependencies]
+napi-build = "2.2.3"
+
+[profile.release]
+lto = true
+strip = "symbols"

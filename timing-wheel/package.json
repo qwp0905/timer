@@ -1,0 +1,23 @@
+{
+  "name": "timing-wheel",
+  "packageManager": "yarn@4.9.2",
+  "devDependencies": {
+    "@napi-rs/cli": "^3.1.5"
+  },
+  "main": "index.js",
+  "scripts": {
+    "cargo": "cargo",
+    "artifacts": "napi artifacts",
+    "build": "napi build --platform --release",
+    "build:debug": "napi build --platform",
+    "prepublishOnly": "napi prepublish -t npm",
+    "universal": "napi universal",
+    "version": "napi version"
+  },
+  "napi": {
+    "binaryName": "timing-wheel",
+    "targets": [
+      "universal-apple-darwin"
+    ]
+  }
+}

@@ -140,3 +140,7 @@ vite.config.ts.timestamp-*
 
 # instructions for GitHub Copilot
 .github/copilot-instructions.md
+
+# Rust
+target/
+*.node
