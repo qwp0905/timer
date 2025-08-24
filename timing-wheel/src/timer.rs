@@ -30,8 +30,8 @@ impl Timer for SystemTimer {
 #[napi]
 #[derive(Debug)]
 pub struct TestingTimer {
-  pub started_at: u32,
-  pub tick: u32,
+  started_at: u32,
+  tick: u32,
 }
 #[napi]
 impl TestingTimer {
