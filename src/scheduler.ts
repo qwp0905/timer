@@ -47,8 +47,9 @@ export class TaskScheduler {
     ...args: T
   ): Task<T, R> {
     this.init()
+    const id = this.lastId++
     const task = new Task({
-      id: this.lastId++,
+      id,
       _onTimeout: callback,
       args,
       onRef: this.onRef,
@@ -57,12 +58,7 @@ export class TaskScheduler {
       hasRef: this.hasRef
     })
 
-    this.wheel.register(
-      task.getId(),
-      Math.min(Math.max(delay, 1), 0xffff_ffff),
-      task.execution,
-      false
-    )
+    this.wheel.register(id, Math.min(Math.max(delay, 1), 0xffff_ffff), task.execution, false)
     return task
   }
   setInterval<T extends any[] = [], R = any>(
@@ -71,8 +67,9 @@ export class TaskScheduler {
     ...args: T
   ): Task<T, R> {
     this.init()
+    const id = this.lastId++
     const task = new Task({
-      id: this.lastId++,
+      id,
       _onTimeout: callback,
       args,
       onRef: this.onRef,
@@ -80,35 +77,28 @@ export class TaskScheduler {
       refresh: this.refresh,
       hasRef: this.hasRef
     })
-    this.wheel.register(
-      task.getId(),
-      Math.min(Math.max(delay, 1), 0xffff_ffff),
-      task.execution,
-      true
-    )
+    this.wheel.register(id, Math.min(Math.max(delay, 1), 0xffff_ffff), task.execution, true)
     return task
   }
 
   clearTimeout(task: number | string | Task<any, any>) {
-    if (typeof task === "number") {
-      this.wheel.unregister(task)
-      return
+    switch (typeof task) {
+      case "number":
+        return this.wheel.unregister(task)
+      case "string":
+        return this.wheel.unregister(Number(task))
+      default:
+        return task.close()
     }
-    if (typeof task === "string") {
-      this.wheel.unregister(Number(task))
-      return
-    }
-    task.close()
   }
   clearInterval(task: number | string | Task<any, any>) {
-    if (typeof task === "number") {
-      this.wheel.unregister(task)
-      return
+    switch (typeof task) {
+      case "number":
+        return this.wheel.unregister(task)
+      case "string":
+        return this.wheel.unregister(Number(task))
+      default:
+        return task.close()
     }
-    if (typeof task === "string") {
-      this.wheel.unregister(Number(task))
-      return
-    }
-    task.close()
   }
 }
