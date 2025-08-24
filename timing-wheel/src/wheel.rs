@@ -1,7 +1,4 @@
-use std::{
-  collections::{HashMap, HashSet},
-  ptr::NonNull,
-};
+use std::{collections::HashMap, ptr::NonNull};
 
 use napi::{Env, Result, bindgen_prelude::Reference};
 
@@ -15,11 +12,12 @@ use crate::{
 
 #[napi]
 pub struct TimingWheel {
-  refs: HashSet<u32>,
   tasks: HashMap<u32, NonNull<Task>>,
   layers: Vec<BucketLayer>,
   timer: Box<dyn Timer>,
   current_tick: u32,
+  ref_count: usize,
+  last_id: u32,
 }
 
 #[napi]
@@ -38,29 +36,50 @@ impl TimingWheel {
   fn with_timer(timer: impl Timer + 'static) -> Self {
     Self {
       tasks: Default::default(),
-      refs: Default::default(),
       layers: Vec::new(),
       timer: Box::new(timer),
       current_tick: 0,
+      ref_count: 0,
+      last_id: 0,
     }
   }
 
   #[napi]
   pub fn set_ref(&mut self, id: u32) {
-    self.refs.insert(id);
+    let task = match self.tasks.get_mut(&id) {
+      Some(task) => task.muts(),
+      None => return,
+    };
+    if task.has_ref() {
+      return;
+    }
+
+    task.set_ref();
+    self.ref_count += 1;
   }
   #[napi]
   pub fn clear_ref(&mut self, id: u32) {
-    self.refs.remove(&id);
+    let task = match self.tasks.get_mut(&id) {
+      Some(task) => task.muts(),
+      None => return,
+    };
+    if !task.has_ref() {
+      return;
+    }
+    task.clear_ref();
+    self.ref_count -= 1;
   }
 
   #[napi]
   pub fn is_ref_empty(&self) -> bool {
-    self.refs.is_empty()
+    self.ref_count == 0
   }
   #[napi]
   pub fn has_ref(&self, id: u32) -> bool {
-    self.refs.contains(&id)
+    match self.tasks.get(&id) {
+      Some(task) => task.refs().has_ref(),
+      None => false,
+    }
   }
 
   #[napi(getter)]
@@ -89,48 +108,53 @@ impl TimingWheel {
     }
 
     let id = task_ref.get_id();
-    self.tasks.insert(id, task);
+    if self.tasks.insert(id, task).is_none() && task_ref.has_ref() {
+      self.ref_count += 1
+    };
     self.layers[layer_size - 1].insert(task);
   }
 
   #[napi]
   pub fn refresh(&mut self, id: u32) {
     let now = self.timer.now();
-    self
-      .tasks
-      .get_mut(&id)
-      .map(|task| {
-        task.muts().set_scheduled_at(now);
-        task.clone()
-      })
-      .map(|ptr| self.register_task_ref(ptr));
+    let mut task = match self.tasks.get_mut(&id) {
+      Some(task) => task.clone(),
+      None => return,
+    };
+    task.muts().set_scheduled_at(now);
+    self.register_task_ref(task);
   }
 
   #[napi]
-  pub fn register(
-    &mut self,
-    id: u32,
-    delay: u32,
-    callback: VoidCallback,
-    is_interval: bool,
-  ) -> Result<()> {
+  pub fn register(&mut self, delay: u32, callback: VoidCallback, is_interval: bool) -> Result<u32> {
     if self.tasks.is_empty() {
       self.timer.reset();
       self.current_tick = 0;
     }
+    let id = self.last_id;
+    self.last_id += 1;
 
     let task = Task::new(id, self.timer.now(), delay, callback, is_interval);
     self.register_task(task);
-    self.set_ref(id);
-    Ok(())
+    Ok(id)
   }
 
   #[napi]
   pub fn unregister(&mut self, id: u32) {
-    if self.tasks.remove(&id).is_none() {
-      return;
+    self.unregister_task(id);
+  }
+
+  #[inline]
+  fn unregister_task(&mut self, id: u32) -> bool {
+    let task = match self.tasks.remove(&id) {
+      Some(task) => task,
+      None => return false,
+    };
+    if !task.refs().has_ref() {
+      return true;
     }
-    self.clear_ref(id);
+    self.ref_count -= 1;
+    true
   }
 
   #[napi]
@@ -177,13 +201,12 @@ impl TimingWheel {
           continue;
         }
 
-        if self.tasks.remove(&id).is_none() {
+        if !self.unregister_task(id) {
           let _ = task.into_raw();
           continue;
         }
 
         if !task_ref.is_interval() {
-          self.clear_ref(id);
           task.into_raw().execute(&env)?;
           continue;
         }

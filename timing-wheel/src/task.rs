@@ -12,6 +12,7 @@ pub struct Task {
   indexes: Vec<usize>,
   callback: VoidCallback,
   is_interval: bool,
+  refed: bool,
 }
 impl Task {
   pub fn new(
@@ -28,6 +29,7 @@ impl Task {
       indexes: get_bucket_indexes(scheduled_at + delay),
       callback,
       is_interval,
+      refed: true,
     }
   }
 
@@ -58,6 +60,18 @@ impl Task {
   pub fn set_scheduled_at(&mut self, scheduled_at: u32) {
     self.scheduled_at = scheduled_at;
     self.indexes = get_bucket_indexes(scheduled_at + self.delay);
+  }
+
+  pub fn has_ref(&self) -> bool {
+    self.refed
+  }
+
+  pub fn set_ref(&mut self) {
+    self.refed = true
+  }
+
+  pub fn clear_ref(&mut self) {
+    self.refed = false
   }
 }
 

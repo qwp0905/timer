@@ -7,7 +7,6 @@ interface ICallback<TArgs extends any[] = any[], TResult = any> {
 
 export class TaskScheduler {
   private readonly wheel = new TimingWheel()
-  private lastId = 0
 
   private perEventLoop = () => {
     this.wheel.tick()
@@ -47,19 +46,20 @@ export class TaskScheduler {
     ...args: T
   ): Task<T, R> {
     this.init()
-    const id = this.lastId++
-    const task = new Task({
+    const id = this.wheel.register(
+      Math.min(Math.max(delay, 1), 0xffff_ffff),
+      createCallback(callback, args),
+      false
+    )
+
+    return new Task({
       id,
       _onTimeout: callback,
-      args,
       onRef: this.onRef,
       unregister: this.unregister,
       refresh: this.refresh,
       hasRef: this.hasRef
     })
-
-    this.wheel.register(id, Math.min(Math.max(delay, 1), 0xffff_ffff), task.execution, false)
-    return task
   }
   setInterval<T extends any[] = [], R = any>(
     callback: ICallback<T, R>,
@@ -67,18 +67,19 @@ export class TaskScheduler {
     ...args: T
   ): Task<T, R> {
     this.init()
-    const id = this.lastId++
-    const task = new Task({
+    const id = this.wheel.register(
+      Math.min(Math.max(delay, 1), 0xffff_ffff),
+      createCallback(callback, args),
+      true
+    )
+    return new Task({
       id,
       _onTimeout: callback,
-      args,
       onRef: this.onRef,
       unregister: this.unregister,
       refresh: this.refresh,
       hasRef: this.hasRef
     })
-    this.wheel.register(id, Math.min(Math.max(delay, 1), 0xffff_ffff), task.execution, true)
-    return task
   }
 
   clearTimeout(task: number | string | Task<any, any>) {
@@ -101,4 +102,8 @@ export class TaskScheduler {
         return task.close()
     }
   }
+}
+
+function createCallback(callback: (...args: any[]) => any, args: any[]) {
+  return () => callback(...args)
 }

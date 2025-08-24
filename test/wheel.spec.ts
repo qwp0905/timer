@@ -18,7 +18,7 @@ describe("TimingWheel", () => {
     const delay = 1000
     const callback = jest.fn()
 
-    wheel.register(1, delay, () => callback(), false)
+    wheel.register(delay, () => callback(), false)
     expect(callback).not.toHaveBeenCalled()
 
     advance(delay - 1)
@@ -31,9 +31,8 @@ describe("TimingWheel", () => {
   it("should register interval task and execute it repeatedly", () => {
     const callback = jest.fn()
     const interval = 1000
-    const id = 1
+    const id = wheel.register(interval, callback, true)
 
-    wheel.register(id, interval, callback, true)
     expect(callback).not.toHaveBeenCalled()
 
     advance(interval - 1)
@@ -52,9 +51,8 @@ describe("TimingWheel", () => {
   it("should cancel timeout task when unregistered", () => {
     const delay = 1000
     const callback = jest.fn()
-    const id = 1
+    const id = wheel.register(delay, callback, false)
 
-    wheel.register(id, delay, callback, false)
     expect(callback).not.toHaveBeenCalled()
 
     wheel.unregister(id)
@@ -66,9 +64,7 @@ describe("TimingWheel", () => {
   it("should cancel interval task when unregistered", () => {
     const callback = jest.fn()
     const interval = 1000
-    const id = 1
-
-    wheel.register(id, interval, callback, true)
+    const id = wheel.register(interval, callback, true)
 
     advance(interval)
     expect(callback).toHaveBeenCalledTimes(1)
@@ -82,11 +78,9 @@ describe("TimingWheel", () => {
   it("should cancel interval task in interval callback", () => {
     let callback
     const interval = 1000
-    const id = 1
     let count = 0
     const maxCount = 3
-    wheel.register(
-      id,
+    const id = wheel.register(
       interval,
       (callback = jest.fn(() => {
         if (++count < maxCount) {
