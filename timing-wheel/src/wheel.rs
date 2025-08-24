@@ -171,8 +171,9 @@ impl TimingWheel {
       }
 
       for mut task in dropdown.drain(..) {
-        let id = task.refs().get_id();
-        if current != task.refs().get_execute_at() {
+        let task_ref = task.refs();
+        let id = task_ref.get_id();
+        if current != task_ref.get_execute_at() {
           continue;
         }
 
@@ -181,15 +182,15 @@ impl TimingWheel {
           continue;
         }
 
-        if let Some(next) = task.refs().next_schedule() {
-          task.muts().set_scheduled_at(next);
-          self.register_task_ref(task);
-          task.refs().execute(&env)?;
+        if !task_ref.is_interval() {
+          self.clear_ref(id);
+          task.into_raw().execute(&env)?;
           continue;
         }
 
-        self.clear_ref(id);
-        task.into_raw().execute(&env)?;
+        task.muts().set_scheduled_at(current);
+        self.register_task_ref(task);
+        task.refs().execute(&env)?;
       }
     }
 
