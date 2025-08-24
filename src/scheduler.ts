@@ -56,7 +56,13 @@ export class TaskScheduler {
       refresh: this.refresh,
       hasRef: this.hasRef
     })
-    this.wheel.register(task.getId(), delay, task.execution, false)
+
+    this.wheel.register(
+      task.getId(),
+      Math.min(Math.max(delay, 1), 0xffff_ffff),
+      task.execution,
+      false
+    )
     return task
   }
   setInterval<T extends any[] = [], R = any>(
@@ -74,7 +80,12 @@ export class TaskScheduler {
       refresh: this.refresh,
       hasRef: this.hasRef
     })
-    this.wheel.register(task.getId(), delay, task.execution, true)
+    this.wheel.register(
+      task.getId(),
+      Math.min(Math.max(delay, 1), 0xffff_ffff),
+      task.execution,
+      true
+    )
     return task
   }
 

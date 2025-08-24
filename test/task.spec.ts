@@ -8,126 +8,130 @@ if (!Symbol.dispose) {
 
 import { spawn } from "child_process"
 import { TaskScheduler } from "../src/scheduler"
-// import { TimeoutTask } from "../src/task"
 import { resolve } from "path"
 import { Task } from "../src/task"
+import { TestingTimer, TimingWheel } from "../timing-wheel"
 
 const schedulerPath = resolve(__dirname, "../src/scheduler")
 
 describe("Task", () => {
+  let timer: TestingTimer
+  let wheel: TimingWheel
   let scheduler: TaskScheduler
 
+  function advance(tick: number) {
+    timer.advance(tick)
+    return new Promise(setImmediate)
+  }
+
   beforeEach(() => {
-    jest.useFakeTimers()
+    timer = new TestingTimer()
+    wheel = TimingWheel.withTesting(timer)
     scheduler = new TaskScheduler()
+    Object.assign(scheduler, { wheel })
   })
 
-  afterEach(() => {
-    jest.clearAllTimers()
-  })
-
-  it("should not execute timeout task if closed before execution", () => {
+  it("should not execute timeout task if closed before execution", async () => {
     const callback = jest.fn()
     const delay = 1000
 
     const task = scheduler.setTimeout(callback, delay)
     expect(callback).not.toHaveBeenCalled()
-    jest.advanceTimersByTime(delay - 1)
+    await advance(delay - 1)
     expect(callback).not.toHaveBeenCalled()
 
     task.close()
 
-    jest.advanceTimersByTime(delay)
+    await advance(delay)
     expect(callback).not.toHaveBeenCalled()
   })
 
-  it('should refresh timeout task when "refresh" is called', () => {
+  it('should refresh timeout task when "refresh" is called', async () => {
     const callback = jest.fn()
     const delay = 1000
 
     const task = scheduler.setTimeout(callback, delay)
     expect(callback).not.toHaveBeenCalled()
 
-    jest.advanceTimersByTime(delay - 1)
+    await advance(delay - 1)
     expect(callback).not.toHaveBeenCalled()
 
     task.refresh()
 
-    jest.advanceTimersByTime(1)
+    await advance(1)
     expect(callback).not.toHaveBeenCalled()
 
-    jest.advanceTimersByTime(delay - 1)
+    await advance(delay - 1)
     expect(callback).toHaveBeenCalledTimes(1)
   })
 
-  it("should stop interval task if close called", () => {
+  it("should stop interval task if close called", async () => {
     const callback = jest.fn()
     const interval = 1000
 
     const task = scheduler.setInterval(callback, interval)
     expect(callback).not.toHaveBeenCalled()
 
-    jest.advanceTimersByTime(interval - 1)
+    await advance(interval - 1)
     expect(callback).not.toHaveBeenCalled()
 
-    jest.advanceTimersByTime(1)
+    await advance(1)
     expect(callback).toHaveBeenCalledTimes(1)
 
-    jest.advanceTimersByTime(interval - 1)
+    await advance(interval - 1)
     expect(callback).toHaveBeenCalledTimes(1)
 
     task.close()
 
-    jest.advanceTimersByTime(interval)
+    await advance(interval)
     expect(callback).toHaveBeenCalledTimes(1)
 
-    jest.advanceTimersByTime(interval)
+    await advance(interval)
     expect(callback).toHaveBeenCalledTimes(1)
   })
 
-  it('should refresh interval task when "refresh" is called', () => {
+  it('should refresh interval task when "refresh" is called', async () => {
     const callback = jest.fn()
     const interval = 1000
 
     const task = scheduler.setInterval(callback, interval)
     expect(callback).not.toHaveBeenCalled()
 
-    jest.advanceTimersByTime(interval - 1)
+    await advance(interval - 1)
     expect(callback).not.toHaveBeenCalled()
 
-    jest.advanceTimersByTime(1)
+    await advance(1)
     expect(callback).toHaveBeenCalledTimes(1)
 
     task.refresh()
 
-    jest.advanceTimersByTime(interval - 1)
+    await advance(interval - 1)
     expect(callback).toHaveBeenCalledTimes(1)
 
-    jest.advanceTimersByTime(1)
+    await advance(1)
     expect(callback).toHaveBeenCalledTimes(2)
 
     task.close()
   })
 
-  it("should close task when disposed", () => {
+  it("should close task when disposed", async () => {
     const callback = jest.fn()
     const delay = 1000
 
     {
       using timer = scheduler.setTimeout(callback, delay)
       expect(callback).not.toHaveBeenCalled()
-      jest.advanceTimersByTime(delay - 1)
+      await advance(delay - 1)
       expect(timer).not.toBeNull()
     }
 
     expect(callback).not.toHaveBeenCalled()
 
-    jest.advanceTimersByTime(delay)
+    await advance(delay)
     expect(callback).not.toHaveBeenCalled()
   })
 
   it("should ignore in eventloop when task is unrefed", async () => {
-    jest.useRealTimers()
     const result = ""
 
     const schedulerName = "scheduler"
@@ -164,7 +168,6 @@ ${schedulerName}.${TaskScheduler.prototype.setTimeout.name}(() => {
   })
 
   it("should remain on eventloop when task is refed", async () => {
-    jest.useRealTimers()
     const result = "result"
 
     const schedulerName = "scheduler"

@@ -3,9 +3,13 @@ use std::{
   ptr::NonNull,
 };
 
-use napi::{Env, Result, bindgen_prelude::Function};
+use napi::{
+  Env, Result,
+  bindgen_prelude::{Function, Reference},
+};
 
 use crate::{
+  TestingTimer,
   layer::BucketLayer,
   pointer::Pointer,
   task::{Task, get_bucket_indexes},
@@ -28,7 +32,13 @@ impl TimingWheel {
     Self::with_timer(SystemTimer::new())
   }
 
-  pub fn with_timer(timer: impl Timer + 'static) -> Self {
+  #[napi(factory)]
+  pub fn with_testing(test: Reference<TestingTimer>) -> Self {
+    Self::with_timer(test)
+  }
+
+  #[inline]
+  fn with_timer(timer: impl Timer + 'static) -> Self {
     Self {
       tasks: Default::default(),
       refs: Default::default(),
@@ -75,10 +85,6 @@ impl TimingWheel {
   #[inline]
   fn register_task_ref(&mut self, task: NonNull<Task>) {
     let task_ref = task.refs();
-    if self.tasks.is_empty() {
-      self.timer.reset();
-      self.current_tick = 0;
-    }
 
     let layer_size = task_ref.layer_size();
     while self.layers.len() < layer_size {
@@ -173,25 +179,26 @@ impl TimingWheel {
         self.layers.pop();
       }
 
-      for task in dropdown.drain(..) {
+      for mut task in dropdown.drain(..) {
         let id = task.refs().get_id();
         if current != task.refs().get_execute_at() {
           continue;
         }
 
-        let mut task = task.into_raw();
-        self.clear_ref(id);
         if self.tasks.remove(&id).is_none() {
+          let _ = task.into_raw();
           continue;
         }
 
-        task.execute(&env)?;
-        if !task.is_interval() {
+        if let Some(next) = task.refs().next_schedule() {
+          task.muts().set_scheduled_at(next);
+          self.register_task_ref(task);
+          task.refs().execute(&env)?;
           continue;
         }
 
-        task.set_scheduled_at(current + 1);
-        self.register_task(task);
+        self.clear_ref(id);
+        task.into_raw().execute(&env)?;
       }
     }
 

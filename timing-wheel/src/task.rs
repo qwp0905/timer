@@ -30,6 +30,10 @@ impl Task {
     }
   }
 
+  pub fn next_schedule(&self) -> Option<u32> {
+    self.is_interval.then_some(self.get_execute_at())
+  }
+
   pub fn get_id(&self) -> u32 {
     self.id
   }
@@ -48,10 +52,6 @@ impl Task {
 
   pub fn execute(&self, env: &Env) -> Result<()> {
     self.callback.borrow_back(env)?.call(())
-  }
-
-  pub fn is_interval(&self) -> bool {
-    self.is_interval
   }
 
   pub fn set_scheduled_at(&mut self, scheduled_at: u32) {

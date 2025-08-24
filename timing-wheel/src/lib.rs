@@ -10,4 +10,5 @@ mod task;
 mod timer;
 mod wheel;
 
+pub use timer::TestingTimer;
 pub use wheel::TimingWheel;
