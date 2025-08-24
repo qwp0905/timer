@@ -17,7 +17,10 @@ export declare class TimingWheel {
   get length(): number
   isEmpty(): boolean
   refresh(id: number): void
-  register(id: number, delay: number, callback: () => void, isInterval: boolean): void
+  register(id: number, delay: number, callback: VoidCallback, isInterval: boolean): void
   unregister(id: number): void
   tick(): void
 }
+
+export type VoidCallback =
+  () => void

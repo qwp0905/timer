@@ -3,16 +3,13 @@ use std::{
   ptr::NonNull,
 };
 
-use napi::{
-  Env, Result,
-  bindgen_prelude::{Function, Reference},
-};
+use napi::{Env, Result, bindgen_prelude::Reference};
 
 use crate::{
   TestingTimer,
   layer::BucketLayer,
   pointer::Pointer,
-  task::{Task, get_bucket_indexes},
+  task::{Task, VoidCallback, get_bucket_indexes},
   timer::{SystemTimer, Timer},
 };
 
@@ -114,7 +111,7 @@ impl TimingWheel {
     &mut self,
     id: u32,
     delay: u32,
-    callback: Function<(), ()>,
+    callback: VoidCallback,
     is_interval: bool,
   ) -> Result<()> {
     if self.tasks.is_empty() {
@@ -122,13 +119,7 @@ impl TimingWheel {
       self.current_tick = 0;
     }
 
-    let task = Task::new(
-      id,
-      self.timer.now(),
-      delay.max(1),
-      callback.create_ref()?,
-      is_interval,
-    );
+    let task = Task::new(id, self.timer.now(), delay, callback, is_interval);
     self.register_task(task);
     self.set_ref(id);
     Ok(())

@@ -2,7 +2,8 @@ use napi::{Env, Result, bindgen_prelude::FunctionRef};
 
 use crate::constant::{BUCKET_MASK, BUCKET_SIZE_BIT};
 
-type VoidCallback = FunctionRef<(), ()>;
+#[napi]
+pub type VoidCallback = FunctionRef<(), ()>;
 
 pub struct Task {
   id: u32,

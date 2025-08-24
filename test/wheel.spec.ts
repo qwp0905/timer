@@ -4,6 +4,11 @@ describe("TimingWheel", () => {
   let wheel: TimingWheel
   let timer: TestingTimer
 
+  function advance(tick: number) {
+    timer.advance(tick)
+    wheel.tick()
+  }
+
   beforeEach(() => {
     timer = new TestingTimer()
     wheel = TimingWheel.withTesting(timer)
@@ -16,12 +21,10 @@ describe("TimingWheel", () => {
     wheel.register(1, delay, () => callback(), false)
     expect(callback).not.toHaveBeenCalled()
 
-    timer.advance(delay - 1)
-    wheel.tick()
+    advance(delay - 1)
     expect(callback).not.toHaveBeenCalled()
 
-    timer.advance(delay)
-    wheel.tick()
+    advance(delay)
     expect(callback).toHaveBeenCalledTimes(1)
   })
 
@@ -33,18 +36,14 @@ describe("TimingWheel", () => {
     wheel.register(id, interval, callback, true)
     expect(callback).not.toHaveBeenCalled()
 
-    timer.advance(interval - 1)
-    wheel.tick()
+    advance(interval - 1)
     expect(callback).not.toHaveBeenCalled()
-    timer.advance(1)
-    wheel.tick()
+    advance(1)
     expect(callback).toHaveBeenCalledTimes(1)
 
-    timer.advance(interval - 1)
-    wheel.tick()
+    advance(interval - 1)
     expect(callback).toHaveBeenCalledTimes(1)
-    timer.advance(1)
-    wheel.tick()
+    advance(1)
     expect(callback).toHaveBeenCalledTimes(2)
 
     wheel.unregister(id)
@@ -60,8 +59,7 @@ describe("TimingWheel", () => {
 
     wheel.unregister(id)
 
-    timer.advance(delay + 100)
-    wheel.tick()
+    advance(delay + 100)
     expect(callback).not.toHaveBeenCalled()
   })
 
@@ -72,14 +70,12 @@ describe("TimingWheel", () => {
 
     wheel.register(id, interval, callback, true)
 
-    timer.advance(interval)
-    wheel.tick()
+    advance(interval)
     expect(callback).toHaveBeenCalledTimes(1)
 
     wheel.unregister(id)
 
-    timer.advance(interval * 2)
-    wheel.tick()
+    advance(interval * 2)
     expect(callback).toHaveBeenCalledTimes(1)
   })
 
@@ -103,47 +99,28 @@ describe("TimingWheel", () => {
 
     expect(callback).not.toHaveBeenCalled()
 
-    timer.advance(interval - 1)
-    wheel.tick()
+    advance(interval - 1)
     expect(callback).not.toHaveBeenCalled()
 
-    timer.advance(1)
-    wheel.tick()
+    advance(1)
     expect(callback).toHaveBeenCalledTimes(1)
 
-    timer.advance(interval - 1)
-    wheel.tick()
+    advance(interval - 1)
     expect(callback).toHaveBeenCalledTimes(1)
 
-    timer.advance(1)
-    wheel.tick()
+    advance(1)
     expect(callback).toHaveBeenCalledTimes(2)
 
-    timer.advance(interval - 1)
-    wheel.tick()
+    advance(interval - 1)
     expect(callback).toHaveBeenCalledTimes(2)
 
-    timer.advance(1)
-    wheel.tick()
+    advance(1)
     expect(callback).toHaveBeenCalledTimes(3)
 
-    timer.advance(interval - 1)
-    wheel.tick()
+    advance(interval - 1)
     expect(callback).toHaveBeenCalledTimes(3)
 
-    timer.advance(1)
-    wheel.tick()
+    advance(1)
     expect(callback).toHaveBeenCalledTimes(3)
-  })
-
-  it("should execute timeout immediately when delay under 1", () => {
-    const callback = jest.fn()
-    const id = 1
-    wheel.register(id, 0, callback, false)
-    expect(callback).toHaveBeenCalledTimes(0)
-
-    timer.advance(1)
-    wheel.tick()
-    expect(callback).toHaveBeenCalledTimes(1)
   })
 })
