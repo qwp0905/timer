@@ -15,9 +15,9 @@
   "homepage": "https://github.com/qwp0905/timer",
   "scripts": {
     "build": "yarn workspace timing-wheel build; tsc -b tsconfig.build.json",
-    "test": "jest --config jest.config.ts",
+    "test": "yarn workspace timing-wheel build:debug; jest --config jest.config.ts",
     "test:cov": "jest --config jest.config.ts --coverage",
-    "bench": "node -r ts-node/register --expose-gc --max-old-space-size=8092 bench/index.ts"
+    "bench": "yarn workspace timing-wheel build; node -r ts-node/register --expose-gc --max-old-space-size=8092 bench/index.ts"
   },
   "devDependencies": {
     "@types/jest": "^29.5.14",
