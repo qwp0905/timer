@@ -226,7 +226,7 @@ Tests with 1 million timers show significant performance improvements over nativ
 | Timer Cancellation | 3,418 ops/ms   | 6,146 ops/ms | ~44% faster |
 | Memory Usage       | Higher         | Lower        | ~49% less   |
 
-The implementation optimizes both execution speed and memory efficiency, delivering ~51% faster timer creation, ~32% faster cancellation, and ~39% less memory usage compared to native Node.js timers.
+The implementation optimizes both execution speed and memory efficiency, delivering ~64% faster timer creation, ~44% faster cancellation, and ~49% less memory usage compared to native Node.js timers.
 
 ## License
 
