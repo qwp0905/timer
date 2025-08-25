@@ -186,6 +186,7 @@ impl TimingWheel {
           dropdown = tasks;
         }
       }
+
       while let Some(true) = self.layers.last().map(|l| l.is_empty()) {
         self.layers.pop();
       }
