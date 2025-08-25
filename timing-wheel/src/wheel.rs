@@ -160,18 +160,18 @@ impl TimingWheel {
   #[napi]
   pub fn tick(&mut self, env: Env) -> Result<()> {
     let now = self.timer.now();
-    let mut dropdown: Vec<NonNull<Task>> = Vec::new();
+    let mut dropdown: Option<Vec<NonNull<Task>>> = None;
 
     for current in (self.current_tick + 1)..=now {
       let mut indexes: Option<Vec<usize>> = None;
       for (i, layer) in self.layers.iter_mut().enumerate().rev() {
-        if layer.is_empty() && dropdown.is_empty() {
+        if let Some(tasks) = dropdown.take() {
+          for task in tasks {
+            layer.insert(task);
+          }
+        } else if layer.is_empty() {
           continue;
-        }
-
-        for task in dropdown.drain(..) {
-          layer.insert(task);
-        }
+        };
 
         let index = match indexes
           .get_or_insert_with(|| get_bucket_indexes(current))
@@ -181,16 +181,19 @@ impl TimingWheel {
           Some(index) => *index,
         };
 
-        if let Some(tasks) = layer.dropdown(index) {
-          dropdown = tasks;
-        }
+        dropdown = layer.dropdown(index);
       }
 
       while let Some(true) = self.layers.last().map(|l| l.is_empty()) {
         self.layers.pop();
       }
 
-      for mut task in dropdown.drain(..) {
+      let tasks = match dropdown.take() {
+        Some(tasks) => tasks,
+        None => continue,
+      };
+
+      for mut task in tasks {
         let task_ref = task.refs();
         let id = task_ref.get_id();
         if current != task_ref.get_execute_at() {
