@@ -4,7 +4,7 @@ use napi::bindgen_prelude::Reference;
 
 pub trait Timer {
   fn reset(&mut self);
-  fn now(&self) -> u32;
+  fn now(&self) -> usize;
 }
 
 pub struct SystemTimer {
@@ -18,8 +18,8 @@ impl SystemTimer {
   }
 }
 impl Timer for SystemTimer {
-  fn now(&self) -> u32 {
-    self.started_at.elapsed().as_millis() as u32
+  fn now(&self) -> usize {
+    self.started_at.elapsed().as_millis() as usize
   }
 
   fn reset(&mut self) {
@@ -54,7 +54,7 @@ impl Timer for Reference<TestingTimer> {
     self.tick = 0;
   }
 
-  fn now(&self) -> u32 {
-    self.started_at + self.tick
+  fn now(&self) -> usize {
+    (self.started_at + self.tick) as usize
   }
 }

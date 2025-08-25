@@ -15,7 +15,7 @@ pub struct TimingWheel {
   tasks: HashMap<u32, NonNull<Task>>,
   layers: Vec<BucketLayer>,
   timer: Box<dyn Timer>,
-  current_tick: u32,
+  current_tick: usize,
   ref_count: usize,
   last_id: u32,
 }
@@ -134,7 +134,7 @@ impl TimingWheel {
     let id = self.last_id;
     self.last_id += 1;
 
-    let task = Task::new(id, self.timer.now(), delay, callback, is_interval);
+    let task = Task::new(id, self.timer.now(), delay as usize, callback, is_interval);
     self.register_task(task);
     Ok(id)
   }

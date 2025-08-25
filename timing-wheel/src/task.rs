@@ -7,8 +7,8 @@ pub type VoidCallback = FunctionRef<(), ()>;
 
 pub struct Task {
   id: u32,
-  scheduled_at: u32,
-  delay: u32,
+  scheduled_at: usize,
+  delay: usize,
   indexes: Vec<usize>,
   callback: VoidCallback,
   is_interval: bool,
@@ -17,8 +17,8 @@ pub struct Task {
 impl Task {
   pub fn new(
     id: u32,
-    scheduled_at: u32,
-    delay: u32,
+    scheduled_at: usize,
+    delay: usize,
     callback: VoidCallback,
     is_interval: bool,
   ) -> Self {
@@ -37,7 +37,7 @@ impl Task {
     self.id
   }
 
-  pub fn get_execute_at(&self) -> u32 {
+  pub fn get_execute_at(&self) -> usize {
     self.scheduled_at + self.delay
   }
 
@@ -57,7 +57,7 @@ impl Task {
     self.is_interval
   }
 
-  pub fn set_scheduled_at(&mut self, scheduled_at: u32) {
+  pub fn set_scheduled_at(&mut self, scheduled_at: usize) {
     self.scheduled_at = scheduled_at;
     self.indexes = get_bucket_indexes(scheduled_at + self.delay);
   }
@@ -75,9 +75,9 @@ impl Task {
   }
 }
 
-pub fn get_bucket_indexes(scheduled_at: u32) -> Vec<usize> {
+pub fn get_bucket_indexes(scheduled_at: usize) -> Vec<usize> {
   let mut indexes = Vec::new();
-  let mut current = scheduled_at as usize;
+  let mut current = scheduled_at;
   while current > 0 {
     indexes.push(current & BUCKET_MASK);
     current >>= BUCKET_SIZE_BIT;
