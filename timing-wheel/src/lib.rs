@@ -4,6 +4,7 @@
 extern crate napi_derive;
 
 mod constant;
+mod index;
 mod layer;
 mod pointer;
 mod task;

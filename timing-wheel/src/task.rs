@@ -1,6 +1,6 @@
 use napi::{Env, Result, bindgen_prelude::FunctionRef};
 
-use crate::constant::{BUCKET_MASK, BUCKET_SIZE_BIT};
+use crate::index::{BucketIndexes, get_bucket_indexes};
 
 #[napi]
 pub type VoidCallback = FunctionRef<(), ()>;
@@ -9,7 +9,7 @@ pub struct Task {
   id: u32,
   scheduled_at: usize,
   delay: usize,
-  indexes: Vec<usize>,
+  indexes: BucketIndexes,
   callback: VoidCallback,
   is_interval: bool,
   refed: bool,
@@ -73,15 +73,4 @@ impl Task {
   pub fn clear_ref(&mut self) {
     self.refed = false
   }
-}
-
-#[inline]
-pub fn get_bucket_indexes(scheduled_at: usize) -> Vec<usize> {
-  let mut indexes = Vec::new();
-  let mut current = scheduled_at;
-  while current > 0 {
-    indexes.push(current & BUCKET_MASK);
-    current >>= BUCKET_SIZE_BIT;
-  }
-  indexes
 }

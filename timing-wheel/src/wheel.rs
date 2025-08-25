@@ -4,9 +4,10 @@ use napi::{Env, Result, bindgen_prelude::Reference};
 
 use crate::{
   TestingTimer,
+  index::{BucketIndexes, get_bucket_indexes},
   layer::BucketLayer,
   pointer::Pointer,
-  task::{Task, VoidCallback, get_bucket_indexes},
+  task::{Task, VoidCallback},
   timer::{SystemTimer, Timer},
 };
 
@@ -163,7 +164,7 @@ impl TimingWheel {
     let mut dropdown: Option<Vec<NonNull<Task>>> = None;
 
     for current in (self.current_tick + 1)..=now {
-      let mut indexes: Option<Vec<usize>> = None;
+      let mut indexes: Option<BucketIndexes> = None;
       for (i, layer) in self.layers.iter_mut().enumerate().rev() {
         if let Some(tasks) = dropdown.take() {
           for task in tasks {
