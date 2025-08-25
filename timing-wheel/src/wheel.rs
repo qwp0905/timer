@@ -186,9 +186,8 @@ impl TimingWheel {
           dropdown = tasks;
         }
       }
-      while self.layers.last().map(|l| l.is_empty()).unwrap_or(false) {
+      while let Some(true) = self.layers.last().map(|l| l.is_empty()) {
         self.layers.pop();
-        println!("pop layer {}", self.layers.len());
       }
 
       for mut task in dropdown.drain(..) {
