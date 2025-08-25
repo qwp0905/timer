@@ -181,8 +181,7 @@ impl TimingWheel {
           Some(index) => *index,
         };
 
-        let tasks = layer.dropdown(index);
-        if let Some(tasks) = tasks {
+        if let Some(tasks) = layer.dropdown(index) {
           dropdown = tasks;
         }
       }

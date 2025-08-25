@@ -75,6 +75,7 @@ impl Task {
   }
 }
 
+#[inline]
 pub fn get_bucket_indexes(scheduled_at: usize) -> Vec<usize> {
   let mut indexes = Vec::new();
   let mut current = scheduled_at;
