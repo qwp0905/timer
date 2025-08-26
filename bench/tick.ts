@@ -27,7 +27,7 @@ function runBenchmark() {
   const results = []
   for (let i = 0; i < trial; i += 1) {
     const elapsed = runTrial()
-    console.log(`trial ${i + 1}: ${elapsed.toLocaleString()}ms`)
+    console.log(`trial ${i + 1}: ${elapsed.toLocaleString()} ms`)
     console.log(`  ${(delay / elapsed).toLocaleString()} ops/ms`)
     console.log("--------------------------------")
     results.push(elapsed)
@@ -36,7 +36,7 @@ function runBenchmark() {
   const average = results.reduce((a, b) => a + b, 0) / trial
   console.log(`\nAverage for ${trial} trials:`)
   console.log("--------------------------------")
-  console.log(`average: ${average.toLocaleString()}ms`)
+  console.log(`average: ${average.toLocaleString()} ms`)
   console.log(`  ${(delay / average).toLocaleString()} ops/ms`)
   console.log("--------------------------------")
 }
