@@ -1,0 +1,11 @@
+#!/bin/bash
+
+set -eou pipefail
+
+if [ ! -f "bench/$1.ts" ]; then
+  echo "File bench/$1.ts not found"
+  exit 1
+fi
+
+yarn workspace timing-wheel build
+node -r ts-node/register --expose-gc --max-old-space-size=8092 bench/$1.ts

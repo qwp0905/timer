@@ -17,7 +17,7 @@
     "build": "yarn workspace timing-wheel build; tsc -b tsconfig.build.json",
     "test": "yarn workspace timing-wheel build:debug; jest --config jest.config.ts",
     "test:cov": "jest --config jest.config.ts --coverage",
-    "bench": "yarn workspace timing-wheel build; node -r ts-node/register --expose-gc --max-old-space-size=8092 bench/index.ts"
+    "bench": "scripts/bench"
   },
   "devDependencies": {
     "@types/jest": "^29.5.14",
