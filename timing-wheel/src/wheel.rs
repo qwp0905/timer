@@ -166,13 +166,11 @@ impl TimingWheel {
     for current in (self.current_tick + 1)..=now {
       let mut indexes: Option<BucketIndexes> = None;
       for (i, layer) in self.layers.iter_mut().enumerate().rev() {
-        if let Some(tasks) = dropdown.take() {
-          for task in tasks {
-            layer.insert(task);
-          }
-        } else if layer.is_empty() {
-          continue;
-        };
+        match dropdown.take() {
+          Some(tasks) => tasks.into_iter().for_each(|task| layer.insert(task)),
+          None if layer.is_empty() => continue,
+          None => {}
+        }
 
         let index = match indexes
           .get_or_insert_with(|| get_bucket_indexes(current))
