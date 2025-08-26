@@ -8,7 +8,7 @@ describe("TaskScheduler", () => {
 
   function advance(tick: number) {
     timer.advance(tick)
-    return new Promise(setImmediate)
+    return new Promise(setImmediate) // to execute tick
   }
 
   beforeEach(() => {
@@ -107,5 +107,24 @@ describe("TaskScheduler", () => {
 
     await advance(interval + 100)
     expect(callback).not.toHaveBeenCalled()
+  })
+
+  it("should run multiple tasks in the same tick", async () => {
+    const callback1 = jest.fn()
+    const callback2 = jest.fn()
+    const delay = 1000
+
+    scheduler.setTimeout(callback1, delay)
+    scheduler.setTimeout(callback2, delay)
+    expect(callback1).not.toHaveBeenCalled()
+    expect(callback2).not.toHaveBeenCalled()
+
+    await advance(delay - 1)
+    expect(callback1).not.toHaveBeenCalled()
+    expect(callback2).not.toHaveBeenCalled()
+
+    await advance(1)
+    expect(callback1).toHaveBeenCalledTimes(1)
+    expect(callback2).toHaveBeenCalledTimes(1)
   })
 })
