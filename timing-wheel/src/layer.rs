@@ -36,3 +36,19 @@ impl BucketLayer {
     tasks
   }
 }
+impl Drop for BucketLayer {
+  fn drop(&mut self) {
+    if self.size == 0 {
+      return;
+    }
+    for bucket in self.buckets.iter_mut() {
+      let tasks = match bucket.take() {
+        Some(tasks) => tasks,
+        None => continue,
+      };
+      for task in tasks {
+        let _ = task.into_raw();
+      }
+    }
+  }
+}
