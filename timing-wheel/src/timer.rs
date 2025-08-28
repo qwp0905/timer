@@ -18,6 +18,7 @@ impl SystemTimer {
   }
 }
 impl Timer for SystemTimer {
+  #[inline]
   fn now(&self) -> usize {
     self.started_at.elapsed().as_millis() as usize
   }

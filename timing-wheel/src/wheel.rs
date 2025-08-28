@@ -1,6 +1,6 @@
 use std::{collections::HashMap, ptr::NonNull};
 
-use napi::{Env, Result, bindgen_prelude::Reference};
+use napi::{Env, JsNumber, Result, bindgen_prelude::Reference};
 
 use crate::{
   TestingTimer,
@@ -122,10 +122,11 @@ impl TimingWheel {
   #[napi]
   pub fn register(
     &mut self,
-    delay: u32,
+    delay: JsNumber,
     callback: VoidCallback,
     is_interval: bool,
   ) -> Result<TaskId> {
+    let delay = convert_delay(delay)?;
     if self.tasks.is_empty() {
       self.timer.reset();
       self.current_tick = 0;
@@ -133,7 +134,7 @@ impl TimingWheel {
     let id = self.last_id;
     self.last_id += 1;
 
-    let task = Task::new(id, self.timer.now(), delay as usize, callback, is_interval);
+    let task = Task::new(id, self.timer.now(), delay, callback, is_interval);
     self.register_task_ref(NonNull::from_box(task));
     Ok(id)
   }
@@ -230,4 +231,11 @@ impl TimingWheel {
       self.layers.push(BucketLayer::new(self.layers.len()));
     }
   }
+}
+
+#[inline]
+fn convert_delay(delay: JsNumber) -> Result<usize> {
+  delay
+    .get_int64()
+    .map(|n| n.max(1).min(0xffff_ffff) as usize)
 }

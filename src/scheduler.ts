@@ -46,14 +46,8 @@ export class TaskScheduler {
     ...args: T
   ): Task<T, R> {
     this.init()
-    const id = this.wheel.register(
-      Math.min(Math.max(delay, 1), 0xffff_ffff),
-      createCallback(callback, args),
-      false
-    )
-
     return new Task({
-      id,
+      id: this.wheel.register(delay, createCallback(callback, args), false),
       _onTimeout: callback,
       onRef: this.onRef,
       unregister: this.unregister,
@@ -67,13 +61,8 @@ export class TaskScheduler {
     ...args: T
   ): Task<T, R> {
     this.init()
-    const id = this.wheel.register(
-      Math.min(Math.max(delay, 1), 0xffff_ffff),
-      createCallback(callback, args),
-      true
-    )
     return new Task({
-      id,
+      id: this.wheel.register(delay, createCallback(callback, args), true),
       _onTimeout: callback,
       onRef: this.onRef,
       unregister: this.unregister,

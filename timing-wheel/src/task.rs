@@ -36,6 +36,7 @@ impl Task {
     }
   }
 
+  #[inline]
   pub fn get_id(&self) -> TaskId {
     self.id
   }
@@ -44,6 +45,7 @@ impl Task {
     self.scheduled_at + self.delay
   }
 
+  #[inline]
   pub fn get_bucket_index(&self, layer_index: usize) -> usize {
     self.indexes[layer_index]
   }
@@ -65,6 +67,7 @@ impl Task {
     self.indexes = get_bucket_indexes(scheduled_at + self.delay);
   }
 
+  #[inline]
   pub fn has_ref(&self) -> bool {
     self.refed
   }

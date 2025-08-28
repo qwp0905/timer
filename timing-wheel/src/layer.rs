@@ -19,6 +19,7 @@ impl BucketLayer {
     }
   }
 
+  #[inline]
   pub fn insert(&mut self, task: TaskRef) {
     let bucket = task.refs().get_bucket_index(self.layer_index);
     self.buckets[bucket].get_or_insert_default().push(task);
