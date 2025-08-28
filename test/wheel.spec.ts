@@ -117,4 +117,19 @@ describe("TimingWheel", () => {
     advance(1)
     expect(callback).toHaveBeenCalledTimes(3)
   })
+
+  it("should execute callback in 1ms with delay under 1", () => {
+    const callback = jest.fn()
+    wheel.register(0, callback, false)
+    expect(callback).toHaveBeenCalledTimes(0)
+
+    advance(1)
+    expect(callback).toHaveBeenCalledTimes(1)
+
+    wheel.register(-1000, callback, false)
+    expect(callback).toHaveBeenCalledTimes(1)
+
+    advance(1)
+    expect(callback).toHaveBeenCalledTimes(2)
+  })
 })
