@@ -196,12 +196,11 @@ impl TimingWheel {
   fn execute_tasks(&mut self, env: &Env, tasks: Vec<TaskRef>, current: usize) -> Result<()> {
     for mut task in tasks {
       let task_ref = task.refs();
-      let id = task_ref.get_id();
       if current != task_ref.get_execute_at() {
         continue;
       }
 
-      if !self.unregister_task(id) {
+      if !self.unregister_task(task_ref.get_id()) {
         let _ = task.into_raw();
         continue;
       }
