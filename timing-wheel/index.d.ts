@@ -8,17 +8,20 @@ export declare class TestingTimer {
 export declare class TimingWheel {
   constructor()
   static withTesting(test: TestingTimer): TimingWheel
-  setRef(id: number): void
-  clearRef(id: number): void
+  setRef(id: TaskId): void
+  clearRef(id: TaskId): void
   isRefEmpty(): boolean
-  hasRef(id: number): boolean
+  hasRef(id: TaskId): boolean
   get length(): number
   isEmpty(): boolean
-  refresh(id: number): void
-  register(delay: number, callback: VoidCallback, isInterval: boolean): number
-  unregister(id: number): void
+  refresh(id: TaskId): void
+  register(delay: number, callback: VoidCallback, isInterval: boolean): TaskId
+  unregister(id: TaskId): void
   tick(): void
 }
+
+export type TaskId =
+  number
 
 export type VoidCallback =
   () => void

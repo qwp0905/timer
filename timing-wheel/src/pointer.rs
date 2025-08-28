@@ -1,5 +1,7 @@
 use std::ptr::NonNull;
 
+use crate::task::Task;
+
 pub trait Pointer<T> {
   fn from_box(v: T) -> Self;
   fn refs(&self) -> &T;
@@ -23,3 +25,5 @@ impl<T> Pointer<T> for NonNull<T> {
     *unsafe { Box::from_raw(self.as_ptr()) }
   }
 }
+
+pub type TaskRef = NonNull<Task>;

@@ -1,9 +1,10 @@
-use std::ptr::NonNull;
-
-use crate::{constant::BUCKET_SIZE, pointer::Pointer, task::Task};
+use crate::{
+  constant::BUCKET_SIZE,
+  pointer::{Pointer, TaskRef},
+};
 
 pub struct BucketLayer {
-  buckets: Vec<Option<Vec<NonNull<Task>>>>,
+  buckets: Vec<Option<Vec<TaskRef>>>,
   layer_index: usize,
   size: usize,
 }
@@ -18,7 +19,7 @@ impl BucketLayer {
     }
   }
 
-  pub fn insert(&mut self, task: NonNull<Task>) {
+  pub fn insert(&mut self, task: TaskRef) {
     let bucket = task.refs().get_bucket_index(self.layer_index);
     self.buckets[bucket].get_or_insert_default().push(task);
     self.size += 1;
@@ -28,7 +29,7 @@ impl BucketLayer {
     self.size == 0
   }
 
-  pub fn dropdown(&mut self, bucket: usize) -> Option<Vec<NonNull<Task>>> {
+  pub fn dropdown(&mut self, bucket: usize) -> Option<Vec<TaskRef>> {
     let tasks = self.buckets[bucket].take();
     if let Some(tasks) = tasks.as_ref() {
       self.size -= tasks.len();

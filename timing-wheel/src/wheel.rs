@@ -4,21 +4,22 @@ use napi::{Env, Result, bindgen_prelude::Reference};
 
 use crate::{
   TestingTimer,
+  constant::MAX_BUCKET_INDEX,
   index::{BucketIndexes, get_bucket_indexes},
   layer::BucketLayer,
-  pointer::Pointer,
-  task::{Task, VoidCallback},
+  pointer::{Pointer, TaskRef},
+  task::{Task, TaskId, VoidCallback},
   timer::{SystemTimer, Timer},
 };
 
 #[napi]
 pub struct TimingWheel {
-  tasks: HashMap<u32, NonNull<Task>>,
+  tasks: HashMap<TaskId, TaskRef>,
   layers: Vec<BucketLayer>,
   timer: Box<dyn Timer>,
   current_tick: usize,
   ref_count: usize,
-  last_id: u32,
+  last_id: TaskId,
 }
 
 #[napi]
@@ -37,7 +38,7 @@ impl TimingWheel {
   fn with_timer(timer: impl Timer + 'static) -> Self {
     Self {
       tasks: Default::default(),
-      layers: Vec::new(),
+      layers: Vec::with_capacity(MAX_BUCKET_INDEX),
       timer: Box::new(timer),
       current_tick: 0,
       ref_count: 0,
@@ -46,7 +47,7 @@ impl TimingWheel {
   }
 
   #[napi]
-  pub fn set_ref(&mut self, id: u32) {
+  pub fn set_ref(&mut self, id: TaskId) {
     let task = match self.tasks.get_mut(&id) {
       Some(task) => task.muts(),
       None => return,
@@ -59,7 +60,7 @@ impl TimingWheel {
     self.ref_count += 1;
   }
   #[napi]
-  pub fn clear_ref(&mut self, id: u32) {
+  pub fn clear_ref(&mut self, id: TaskId) {
     let task = match self.tasks.get_mut(&id) {
       Some(task) => task.muts(),
       None => return,
@@ -76,7 +77,7 @@ impl TimingWheel {
     self.ref_count == 0
   }
   #[napi]
-  pub fn has_ref(&self, id: u32) -> bool {
+  pub fn has_ref(&self, id: TaskId) -> bool {
     match self.tasks.get(&id) {
       Some(task) => task.refs().has_ref(),
       None => false,
@@ -94,13 +95,7 @@ impl TimingWheel {
   }
 
   #[inline]
-  fn register_task(&mut self, task: Task) {
-    let pointer = NonNull::from_box(task);
-    self.register_task_ref(pointer);
-  }
-
-  #[inline]
-  fn register_task_ref(&mut self, task: NonNull<Task>) {
+  fn register_task_ref(&mut self, task: TaskRef) {
     let task_ref = task.refs();
 
     let layer_size = task_ref.layer_size();
@@ -116,7 +111,7 @@ impl TimingWheel {
   }
 
   #[napi]
-  pub fn refresh(&mut self, id: u32) {
+  pub fn refresh(&mut self, id: TaskId) {
     let now = self.timer.now();
     let mut task = match self.tasks.get_mut(&id) {
       Some(task) => task.clone(),
@@ -127,7 +122,12 @@ impl TimingWheel {
   }
 
   #[napi]
-  pub fn register(&mut self, delay: u32, callback: VoidCallback, is_interval: bool) -> Result<u32> {
+  pub fn register(
+    &mut self,
+    delay: u32,
+    callback: VoidCallback,
+    is_interval: bool,
+  ) -> Result<TaskId> {
     if self.tasks.is_empty() {
       self.timer.reset();
       self.current_tick = 0;
@@ -136,17 +136,17 @@ impl TimingWheel {
     self.last_id += 1;
 
     let task = Task::new(id, self.timer.now(), delay as usize, callback, is_interval);
-    self.register_task(task);
+    self.register_task_ref(NonNull::from_box(task));
     Ok(id)
   }
 
   #[napi]
-  pub fn unregister(&mut self, id: u32) {
+  pub fn unregister(&mut self, id: TaskId) {
     self.unregister_task(id);
   }
 
   #[inline]
-  fn unregister_task(&mut self, id: u32) -> bool {
+  fn unregister_task(&mut self, id: TaskId) -> bool {
     let task = match self.tasks.remove(&id) {
       Some(task) => task,
       None => return false,
@@ -161,7 +161,7 @@ impl TimingWheel {
   #[napi]
   pub fn tick(&mut self, env: Env) -> Result<()> {
     let now = self.timer.now();
-    let mut dropdown: Option<Vec<NonNull<Task>>> = None;
+    let mut dropdown: Option<Vec<TaskRef>> = None;
 
     for current in (self.current_tick + 1)..=now {
       let mut indexes: Option<BucketIndexes> = None;
@@ -183,39 +183,47 @@ impl TimingWheel {
         dropdown = layer.dropdown(index);
       }
 
-      while let Some(true) = self.layers.last().map(|l| l.is_empty()) {
-        self.layers.pop();
-      }
+      self.resize_layers();
 
-      let tasks = match dropdown.take() {
-        Some(tasks) => tasks,
-        None => continue,
-      };
-
-      for mut task in tasks {
-        let task_ref = task.refs();
-        let id = task_ref.get_id();
-        if current != task_ref.get_execute_at() {
-          continue;
-        }
-
-        if !self.unregister_task(id) {
-          let _ = task.into_raw();
-          continue;
-        }
-
-        if !task_ref.is_interval() {
-          task.into_raw().execute(&env)?;
-          continue;
-        }
-
-        task.muts().set_scheduled_at(current);
-        self.register_task_ref(task);
-        task.refs().execute(&env)?;
+      if let Some(tasks) = dropdown.take() {
+        self.execute_tasks(&env, tasks, current)?;
       }
     }
 
     self.current_tick = now;
     Ok(())
+  }
+
+  #[inline]
+  fn execute_tasks(&mut self, env: &Env, tasks: Vec<TaskRef>, current: usize) -> Result<()> {
+    for mut task in tasks {
+      let task_ref = task.refs();
+      let id = task_ref.get_id();
+      if current != task_ref.get_execute_at() {
+        continue;
+      }
+
+      if !self.unregister_task(id) {
+        let _ = task.into_raw();
+        continue;
+      }
+
+      if !task_ref.is_interval() {
+        task.into_raw().execute(&env)?;
+        continue;
+      }
+
+      task.muts().set_scheduled_at(current);
+      self.register_task_ref(task);
+      task.refs().execute(&env)?;
+    }
+    Ok(())
+  }
+
+  #[inline]
+  fn resize_layers(&mut self) {
+    while let Some(true) = self.layers.last().map(|l| l.is_empty()) {
+      self.layers.pop();
+    }
   }
 }

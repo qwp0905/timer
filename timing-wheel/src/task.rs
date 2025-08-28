@@ -5,8 +5,11 @@ use crate::index::{BucketIndexes, get_bucket_indexes};
 #[napi]
 pub type VoidCallback = FunctionRef<(), ()>;
 
+#[napi]
+pub type TaskId = u32;
+
 pub struct Task {
-  id: u32,
+  id: TaskId,
   scheduled_at: usize,
   delay: usize,
   indexes: BucketIndexes,
@@ -16,7 +19,7 @@ pub struct Task {
 }
 impl Task {
   pub fn new(
-    id: u32,
+    id: TaskId,
     scheduled_at: usize,
     delay: usize,
     callback: VoidCallback,
@@ -33,7 +36,7 @@ impl Task {
     }
   }
 
-  pub fn get_id(&self) -> u32 {
+  pub fn get_id(&self) -> TaskId {
     self.id
   }
 
