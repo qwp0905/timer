@@ -99,9 +99,7 @@ impl TimingWheel {
     let task_ref = task.refs();
 
     let layer_size = task_ref.layer_size();
-    while self.layers.len() < layer_size {
-      self.layers.push(BucketLayer::new(self.layers.len()));
-    }
+    self.expand_layers(layer_size);
 
     let id = task_ref.get_id();
     if self.tasks.insert(id, task).is_none() && task_ref.has_ref() {
@@ -183,7 +181,7 @@ impl TimingWheel {
         dropdown = layer.dropdown(index);
       }
 
-      self.resize_layers();
+      self.reduce_layers();
 
       if let Some(tasks) = dropdown.take() {
         self.execute_tasks(&env, tasks, current)?;
@@ -221,9 +219,16 @@ impl TimingWheel {
   }
 
   #[inline]
-  fn resize_layers(&mut self) {
+  fn reduce_layers(&mut self) {
     while let Some(true) = self.layers.last().map(|l| l.is_empty()) {
       self.layers.pop();
+    }
+  }
+
+  #[inline]
+  fn expand_layers(&mut self, layer_size: usize) {
+    while self.layers.len() < layer_size {
+      self.layers.push(BucketLayer::new(self.layers.len()));
     }
   }
 }
