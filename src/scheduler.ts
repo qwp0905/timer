@@ -17,21 +17,11 @@ export class TaskScheduler {
   }
   private scheduleTicker() {
     const immediate = setImmediate(this.perEventLoop)
-    if (this.wheel.isEmpty()) {
-      return
-    }
     if (!this.wheel.isRefEmpty()) {
       return
     }
 
     immediate.unref()
-  }
-
-  private init() {
-    if (!this.wheel.isEmpty()) {
-      return
-    }
-    this.scheduleTicker()
   }
 
   private onRef = (id: number, hasRef: boolean) =>
@@ -45,8 +35,8 @@ export class TaskScheduler {
     delay: number = 1,
     ...args: T
   ): Task<T, R> {
-    this.init()
-    return new Task({
+    const isEmpty = this.wheel.isEmpty()
+    const task = new Task({
       id: this.wheel.register(delay, createCallback(callback, args), false),
       _onTimeout: callback,
       onRef: this.onRef,
@@ -54,14 +44,18 @@ export class TaskScheduler {
       refresh: this.refresh,
       hasRef: this.hasRef
     })
+    if (isEmpty) {
+      this.scheduleTicker()
+    }
+    return task
   }
   setInterval<T extends any[] = [], R = any>(
     callback: ICallback<T, R>,
     delay: number = 1,
     ...args: T
   ): Task<T, R> {
-    this.init()
-    return new Task({
+    const isEmpty = this.wheel.isEmpty()
+    const task = new Task({
       id: this.wheel.register(delay, createCallback(callback, args), true),
       _onTimeout: callback,
       onRef: this.onRef,
@@ -69,6 +63,10 @@ export class TaskScheduler {
       refresh: this.refresh,
       hasRef: this.hasRef
     })
+    if (isEmpty) {
+      this.scheduleTicker()
+    }
+    return task
   }
 
   clearTimeout(task: number | string | Task<any, any>) {
