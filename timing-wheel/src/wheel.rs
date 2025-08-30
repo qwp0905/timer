@@ -187,6 +187,10 @@ impl TimingWheel {
       if let Some(tasks) = dropdown.take() {
         self.execute_tasks(&env, tasks, current)?;
       }
+
+      if self.tasks.is_empty() {
+        self.layers.clear();
+      }
     }
 
     self.current_tick = now;
