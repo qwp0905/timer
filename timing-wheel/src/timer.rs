@@ -1,61 +1,92 @@
-use std::time::Instant;
+use std::{
+  thread::{JoinHandle, spawn},
+  time::{Duration, Instant},
+};
 
-use napi::bindgen_prelude::Reference;
+use crossbeam::{
+  channel::{Receiver, Sender, bounded, tick, unbounded},
+  select,
+};
+
+use crate::channel::MustSend;
 
 pub trait Timer {
   fn reset(&mut self);
-  fn now(&self) -> usize;
+  fn recv(&mut self) -> &Receiver<usize>;
+  fn close(&mut self);
+  fn idle(&mut self);
 }
 
-pub struct SystemTimer {
-  started_at: Instant,
-}
+pub struct SystemTimer(Option<(JoinHandle<()>, Sender<()>, Receiver<usize>, Sender<()>)>);
 impl SystemTimer {
   pub fn new() -> Self {
-    Self {
-      started_at: Instant::now(),
-    }
+    Self(None)
+  }
+
+  fn bootstrap() -> (JoinHandle<()>, Sender<()>, Receiver<usize>, Sender<()>) {
+    let (input, input_recv) = unbounded();
+    let (output_tx, output) = unbounded();
+    let (idle, idle_recv) = bounded(1);
+    let thread = spawn(move || {
+      let tick = tick(Duration::from_millis(1));
+      while let Ok(_) = input_recv.recv() {
+        let started_at = Instant::now();
+        loop {
+          select! {
+            recv(tick) -> t => output_tx.must_send((t.unwrap() - started_at).as_millis() as usize),
+            recv(idle_recv) -> _ => break,
+          }
+        }
+      }
+    });
+    (thread, input, output, idle)
   }
 }
+
 impl Timer for SystemTimer {
-  #[inline]
-  fn now(&self) -> usize {
-    self.started_at.elapsed().as_millis() as usize
-  }
-
   fn reset(&mut self) {
-    self.started_at = Instant::now();
+    self.0.get_or_insert_with(Self::bootstrap).1.must_send(());
   }
-}
 
-#[napi]
-#[derive(Debug)]
-pub struct TestingTimer {
-  started_at: u32,
-  tick: u32,
-}
-#[napi]
-impl TestingTimer {
-  #[napi(constructor)]
-  pub fn new() -> Self {
-    Self {
-      started_at: 0,
-      tick: 0,
+  fn recv(&mut self) -> &Receiver<usize> {
+    &self.0.get_or_insert_with(Self::bootstrap).2
+  }
+
+  fn close(&mut self) {
+    if let Some((thread, input, output, idle)) = self.0.take() {
+      drop(input);
+      drop(output);
+      drop(idle);
+      let _ = thread.join();
     }
   }
 
-  #[napi]
-  pub fn advance(&mut self, tick: u32) {
-    self.tick += tick;
+  fn idle(&mut self) {
+    self.0.get_or_insert_with(Self::bootstrap).3.must_send(());
   }
 }
-impl Timer for Reference<TestingTimer> {
-  fn reset(&mut self) {
-    self.started_at = 0;
-    self.tick = 0;
-  }
 
-  fn now(&self) -> usize {
-    (self.started_at + self.tick) as usize
-  }
-}
+// #[napi]
+// pub struct TestingTimer {
+//   tick: u32,
+// }
+// #[napi]
+// impl TestingTimer {
+//   #[napi(constructor)]
+//   pub fn new() -> Self {
+//     Self { tick: 0 }
+//   }
+
+//   #[napi]
+//   pub fn advance(&mut self, tick: u32) {
+//     self.tick += tick;
+//   }
+// }
+// impl Timer for TestingTimer {
+//   fn now(&self) -> usize {
+//     self.tick as usize
+//   }
+//   fn reset(&mut self) {
+//     self.tick = 0
+//   }
+// }

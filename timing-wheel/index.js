@@ -393,5 +393,4 @@ if (!nativeBinding) {
 }
 
 module.exports = nativeBinding
-module.exports.TestingTimer = nativeBinding.TestingTimer
-module.exports.TimingWheel = nativeBinding.TimingWheel
+module.exports.TimingWheelThread = nativeBinding.TimingWheelThread

@@ -1,169 +1,55 @@
-use std::{collections::HashMap, ptr::NonNull};
-
-use napi::{Env, JsNumber, Result, bindgen_prelude::Reference};
+use crossbeam::{
+  channel::{Receiver, Sender},
+  select,
+};
 
 use crate::{
-  TestingTimer,
+  channel::MustSend,
   constant::MAX_BUCKET_INDEX,
   index::{BucketIndexes, get_bucket_indexes},
   layer::BucketLayer,
-  pointer::{Pointer, TaskRef},
-  task::{Task, TaskId, VoidCallback},
-  timer::{SystemTimer, Timer},
+  task::{Task, TaskId},
+  timer::Timer,
 };
 
-#[napi]
-pub struct TimingWheel {
-  tasks: HashMap<TaskId, TaskRef>,
-  layers: Vec<BucketLayer>,
-  timer: Box<dyn Timer>,
-  current_tick: usize,
-  ref_count: usize,
-  last_id: TaskId,
+pub enum Message {
+  New(TaskId, usize),
+  Idle,
 }
 
-#[napi]
+pub struct TimingWheel {
+  layers: Vec<BucketLayer>,
+  timer: Box<dyn Timer>,
+  executor: Sender<Task>,
+  input_recv: Receiver<Message>,
+  current_tick: usize,
+  count: usize,
+}
 impl TimingWheel {
-  #[napi(constructor)]
-  pub fn new() -> Self {
-    Self::with_timer(SystemTimer::new())
-  }
-
-  #[napi(factory)]
-  pub fn with_testing(test: Reference<TestingTimer>) -> Self {
-    Self::with_timer(test)
-  }
-
-  #[inline]
-  fn with_timer(timer: impl Timer + 'static) -> Self {
+  pub fn new(timer: Box<dyn Timer>, executor: Sender<Task>, input_recv: Receiver<Message>) -> Self {
     Self {
-      tasks: Default::default(),
       layers: Vec::with_capacity(MAX_BUCKET_INDEX),
-      timer: Box::new(timer),
+      timer,
+      executor,
+      input_recv,
       current_tick: 0,
-      ref_count: 0,
-      last_id: 0,
+      count: 0,
     }
-  }
-
-  #[napi]
-  pub fn set_ref(&mut self, id: TaskId) {
-    let task = match self.tasks.get_mut(&id) {
-      Some(task) => task.muts(),
-      None => return,
-    };
-    if task.has_ref() {
-      return;
-    }
-
-    task.set_ref();
-    self.ref_count += 1;
-  }
-  #[napi]
-  pub fn clear_ref(&mut self, id: TaskId) {
-    let task = match self.tasks.get_mut(&id) {
-      Some(task) => task.muts(),
-      None => return,
-    };
-    if !task.has_ref() {
-      return;
-    }
-    task.clear_ref();
-    self.ref_count -= 1;
-  }
-
-  #[napi]
-  pub fn is_ref_empty(&self) -> bool {
-    self.ref_count == 0
-  }
-  #[napi]
-  pub fn has_ref(&self, id: TaskId) -> bool {
-    match self.tasks.get(&id) {
-      Some(task) => task.refs().has_ref(),
-      None => false,
-    }
-  }
-
-  #[napi(getter)]
-  pub fn length(&self) -> u32 {
-    self.tasks.len() as u32
-  }
-
-  #[napi]
-  pub fn is_empty(&self) -> bool {
-    self.tasks.is_empty()
   }
 
   #[inline]
-  fn register_task_ref(&mut self, task: TaskRef) {
-    let task_ref = task.refs();
-
-    let layer_size = task_ref.layer_size();
-    self.expand_layers(layer_size);
-
-    let id = task_ref.get_id();
-    if self.tasks.insert(id, task).is_none() && task_ref.has_ref() {
-      self.ref_count += 1
-    };
-    self.layers[layer_size - 1].insert(task);
-  }
-
-  #[napi]
-  pub fn refresh(&mut self, id: TaskId) {
-    let now = self.timer.now();
-    let mut task = match self.tasks.get_mut(&id) {
-      Some(task) => task.clone(),
-      None => return,
-    };
-    task.muts().set_scheduled_at(now);
-    self.register_task_ref(task);
-  }
-
-  #[napi]
-  pub fn register(
-    &mut self,
-    delay: JsNumber,
-    callback: VoidCallback,
-    is_interval: bool,
-  ) -> Result<TaskId> {
-    let delay = convert_delay(delay)?;
-    if self.tasks.is_empty() {
-      self.timer.reset();
-      self.current_tick = 0;
-    }
-    let id = self.last_id;
-    self.last_id += 1;
-
-    let task = Task::new(id, self.timer.now(), delay, callback, is_interval);
-    self.register_task_ref(NonNull::from_box(task));
-    Ok(id)
-  }
-
-  #[napi]
-  pub fn unregister(&mut self, id: TaskId) {
-    self.unregister_task(id);
+  fn idle(&mut self) {
+    self.timer.idle();
+    self.layers.clear();
   }
 
   #[inline]
-  fn unregister_task(&mut self, id: TaskId) -> bool {
-    let task = match self.tasks.remove(&id) {
-      Some(task) => task,
-      None => return false,
-    };
-    if !task.refs().has_ref() {
-      return true;
-    }
-    self.ref_count -= 1;
-    true
-  }
-
-  #[napi]
-  pub fn tick(&mut self, env: Env) -> Result<()> {
-    let now = self.timer.now();
-    let mut dropdown: Option<Vec<TaskRef>> = None;
+  fn tick(&mut self, now: usize) {
+    let mut dropdown: Option<Vec<Task>> = None;
 
     for current in (self.current_tick + 1)..=now {
       let mut indexes: Option<BucketIndexes> = None;
+
       for (i, layer) in self.layers.iter_mut().enumerate().rev() {
         match dropdown.take() {
           Some(tasks) => tasks.into_iter().for_each(|task| layer.insert(task)),
@@ -185,37 +71,45 @@ impl TimingWheel {
       self.reduce_layers();
 
       if let Some(tasks) = dropdown.take() {
-        self.execute_tasks(&env, tasks, current)?;
+        self.execute_tasks(tasks);
       }
     }
 
     self.current_tick = now;
-    Ok(())
+  }
+
+  pub fn start_loop(&mut self) {
+    self.current_tick = 0;
+    self.timer.reset();
+    loop {
+      select! {
+        recv(self.input_recv) -> msg => {
+          match msg {
+            Ok(Message::New(id, delay)) => self.register_new(id, delay),
+            Ok(Message::Idle) => return self.idle(),
+            Err(_) => return self.timer.close(),
+          };
+        }
+        recv(self.timer.recv()) -> now => self.tick(now.unwrap()),
+      };
+    }
   }
 
   #[inline]
-  fn execute_tasks(&mut self, env: &Env, tasks: Vec<TaskRef>, current: usize) -> Result<()> {
-    for mut task in tasks {
-      let task_ref = task.refs();
-      if current != task_ref.get_execute_at() {
-        continue;
-      }
+  fn register_new(&mut self, id: TaskId, delay: usize) {
+    let task = Task::new(id, self.current_tick + delay);
+    self.register_task(task);
+  }
 
-      if !self.unregister_task(task_ref.get_id()) {
-        let _ = task.into_raw();
-        continue;
-      }
-
-      if !task_ref.is_interval() {
-        task.into_raw().execute(&env)?;
-        continue;
-      }
-
-      task.muts().set_scheduled_at(current);
-      self.register_task_ref(task);
-      task.refs().execute(&env)?;
+  #[inline]
+  fn register_task(&mut self, mut task: Task) {
+    let layer_size = task.layer_size();
+    while self.layers.len() < layer_size {
+      self.layers.push(BucketLayer::new(self.layers.len()));
     }
-    Ok(())
+
+    self.layers[layer_size - 1].insert(task);
+    self.count += 1;
   }
 
   #[inline]
@@ -226,16 +120,10 @@ impl TimingWheel {
   }
 
   #[inline]
-  fn expand_layers(&mut self, layer_size: usize) {
-    while self.layers.len() < layer_size {
-      self.layers.push(BucketLayer::new(self.layers.len()));
+  fn execute_tasks(&mut self, tasks: Vec<Task>) {
+    self.count -= tasks.len();
+    for task in tasks {
+      self.executor.must_send(task);
     }
   }
-}
-
-#[inline]
-fn convert_delay(delay: JsNumber) -> Result<usize> {
-  delay
-    .get_int64()
-    .map(|n| n.max(1).min(0xffff_ffff) as usize)
 }

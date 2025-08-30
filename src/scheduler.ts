@@ -1,12 +1,12 @@
 import { Task } from "./task"
-import { TimingWheel } from "../timing-wheel"
+import { TimingWheelThread } from "../timing-wheel"
 
 interface ICallback<TArgs extends any[] = any[], TResult = any> {
   (...args: TArgs): TResult
 }
 
 export class TaskScheduler {
-  private readonly wheel = new TimingWheel()
+  private readonly wheel = new TimingWheelThread()
 
   private perEventLoop = () => {
     this.wheel.tick()
