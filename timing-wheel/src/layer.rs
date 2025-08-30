@@ -31,11 +31,12 @@ impl BucketLayer {
   }
 
   pub fn dropdown(&mut self, bucket: usize) -> Option<Vec<TaskRef>> {
-    let tasks = self.buckets[bucket].take();
-    if let Some(tasks) = tasks.as_ref() {
-      self.size -= tasks.len();
-    }
-    tasks
+    let tasks = match self.buckets[bucket].take() {
+      Some(t) => t,
+      None => return None,
+    };
+    self.size -= tasks.len();
+    Some(tasks)
   }
 }
 impl Drop for BucketLayer {
