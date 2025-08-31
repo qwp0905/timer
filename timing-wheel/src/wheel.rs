@@ -180,6 +180,7 @@ impl TimingWheel {
       dropdown = layer.dropdown(index);
     }
 
+    self.reduce_layers();
     dropdown
   }
 
@@ -188,11 +189,7 @@ impl TimingWheel {
     let now = self.timer.now();
 
     for current in (self.current_tick + 1)..=now {
-      let dropdown = self.dropdown(current);
-
-      self.reduce_layers();
-
-      if let Some(tasks) = dropdown {
+      if let Some(tasks) = self.dropdown(current) {
         self.execute_tasks(&env, tasks, current)?;
       }
 
