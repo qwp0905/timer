@@ -157,34 +157,42 @@ impl TimingWheel {
     true
   }
 
+  #[inline]
+  fn dropdown(&mut self, current: usize) -> Option<Vec<TaskRef>> {
+    let mut dropdown: Option<Vec<TaskRef>> = None;
+    let mut indexes: Option<BucketIndexes> = None;
+
+    for (i, layer) in self.layers.iter_mut().enumerate().rev() {
+      match dropdown.take() {
+        Some(tasks) => tasks.into_iter().for_each(|task| layer.insert(task)),
+        None if layer.is_empty() => continue,
+        None => {}
+      }
+
+      let index = match indexes
+        .get_or_insert_with(|| get_bucket_indexes(current))
+        .get(i)
+      {
+        None => continue,
+        Some(index) => *index,
+      };
+
+      dropdown = layer.dropdown(index);
+    }
+
+    dropdown
+  }
+
   #[napi]
   pub fn tick(&mut self, env: Env) -> Result<()> {
     let now = self.timer.now();
-    let mut dropdown: Option<Vec<TaskRef>> = None;
 
     for current in (self.current_tick + 1)..=now {
-      let mut indexes: Option<BucketIndexes> = None;
-      for (i, layer) in self.layers.iter_mut().enumerate().rev() {
-        match dropdown.take() {
-          Some(tasks) => tasks.into_iter().for_each(|task| layer.insert(task)),
-          None if layer.is_empty() => continue,
-          None => {}
-        }
-
-        let index = match indexes
-          .get_or_insert_with(|| get_bucket_indexes(current))
-          .get(i)
-        {
-          None => continue,
-          Some(index) => *index,
-        };
-
-        dropdown = layer.dropdown(index);
-      }
+      let dropdown = self.dropdown(current);
 
       self.reduce_layers();
 
-      if let Some(tasks) = dropdown.take() {
+      if let Some(tasks) = dropdown {
         self.execute_tasks(&env, tasks, current)?;
       }
 

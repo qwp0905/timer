@@ -1,6 +1,6 @@
 import { TestingTimer, TimingWheel } from "../timing-wheel"
 
-const trial = 10
+const trial = 30
 
 const delay = 0x00ff_ffff
 const count = 1_000_000
