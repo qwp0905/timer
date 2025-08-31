@@ -1,17 +1,17 @@
 import { TestingTimer, TimingWheel } from "../timing-wheel"
 
-const trial = 30
+const trial = 10
 
 const delay = 0x00ff_ffff
 const count = 1_000_000
 const callback = () => {}
-const delays = Array.from({ length: trial }, () => Math.max(1, Math.random() * delay))
+const delays = Array.from({ length: count }, () => Math.random() * delay)
 
 function runTrial() {
   const timer = new TestingTimer()
   const wheel = TimingWheel.withTesting(timer)
   for (let i = 0; i < count; i += 1) {
-    wheel.register(delays[i % trial], callback, false)
+    wheel.register(delays[i], callback, false)
   }
 
   timer.advance(delay)

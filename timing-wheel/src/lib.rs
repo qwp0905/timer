@@ -8,8 +8,9 @@ mod index;
 mod layer;
 mod pointer;
 mod task;
+mod test;
 mod timer;
 mod wheel;
 
-pub use timer::TestingTimer;
+pub use test::*;
 pub use wheel::TimingWheel;
