@@ -10,8 +10,8 @@ const delays = Array.from({ length: count }, () => Math.random() * delay)
 function runTrial() {
   const timer = new TestingTimer()
   const wheel = TimingWheel.withTesting(timer)
-  for (let i = 0; i < count; i += 1) {
-    wheel.register(delays[i], callback, false)
+  for (const delay of delays) {
+    wheel.register(delay, callback, false)
   }
 
   timer.advance(delay)
