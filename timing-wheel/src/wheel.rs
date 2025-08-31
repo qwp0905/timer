@@ -150,10 +150,10 @@ impl TimingWheel {
       Some(task) => task,
       None => return false,
     };
-    if !task.refs().has_ref() {
-      return true;
+
+    if task.refs().has_ref() {
+      self.ref_count -= 1;
     }
-    self.ref_count -= 1;
     true
   }
 

@@ -23,6 +23,7 @@ impl Timer for SystemTimer {
     self.started_at.elapsed().as_millis() as usize
   }
 
+  #[inline]
   fn reset(&mut self) {
     self.started_at = Instant::now();
   }

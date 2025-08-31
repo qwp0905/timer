@@ -41,6 +41,7 @@ impl Task {
     self.id
   }
 
+  #[inline]
   pub fn get_execute_at(&self) -> usize {
     self.scheduled_at + self.delay
   }
@@ -50,18 +51,22 @@ impl Task {
     self.indexes[layer_index]
   }
 
+  #[inline]
   pub fn layer_size(&self) -> usize {
     self.indexes.len()
   }
 
+  #[inline]
   pub fn execute(&self, env: &Env) -> Result<()> {
     self.callback.borrow_back(env)?.call(())
   }
 
+  #[inline]
   pub fn is_interval(&self) -> bool {
     self.is_interval
   }
 
+  #[inline]
   pub fn set_scheduled_at(&mut self, scheduled_at: usize) {
     self.scheduled_at = scheduled_at;
     self.indexes = get_bucket_indexes(scheduled_at + self.delay);
@@ -72,10 +77,12 @@ impl Task {
     self.refed
   }
 
+  #[inline]
   pub fn set_ref(&mut self) {
     self.refed = true
   }
 
+  #[inline]
   pub fn clear_ref(&mut self) {
     self.refed = false
   }

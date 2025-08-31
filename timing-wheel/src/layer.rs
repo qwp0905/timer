@@ -9,6 +9,7 @@ pub struct BucketLayer {
   size: usize,
 }
 impl BucketLayer {
+  #[inline]
   pub fn new(layer_index: usize) -> Self {
     let mut buckets = Vec::new();
     buckets.resize_with(BUCKET_SIZE, || None);
@@ -26,10 +27,12 @@ impl BucketLayer {
     self.size += 1;
   }
 
+  #[inline]
   pub fn is_empty(&self) -> bool {
     self.size == 0
   }
 
+  #[inline]
   pub fn dropdown(&mut self, bucket: usize) -> Option<Vec<TaskRef>> {
     let tasks = match self.buckets[bucket].take() {
       Some(t) => t,
