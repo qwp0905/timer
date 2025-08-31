@@ -1,4 +1,4 @@
-use std::{collections::HashMap, ptr::NonNull};
+use std::collections::HashMap;
 
 use napi::{Env, JsNumber, Result, bindgen_prelude::Reference};
 
@@ -7,7 +7,7 @@ use crate::{
   constant::MAX_BUCKET_INDEX,
   index::{BucketIndexes, get_bucket_indexes},
   layer::BucketLayer,
-  pointer::{Pointer, TaskRef},
+  pointer::{IntoPointer, Pointer, TaskRef},
   task::{Task, TaskId, VoidCallback},
   timer::{SystemTimer, Timer},
 };
@@ -135,7 +135,7 @@ impl TimingWheel {
     self.last_id += 1;
 
     let task = Task::new(id, self.timer.now(), delay, callback, is_interval);
-    self.register_task_ref(NonNull::from_box(task));
+    self.register_task_ref(task.create_ptr());
     Ok(id)
   }
 
