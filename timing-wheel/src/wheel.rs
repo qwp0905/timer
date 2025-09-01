@@ -5,7 +5,7 @@ use napi::{Env, JsNumber, Result, bindgen_prelude::Reference};
 use crate::{
   TestingTimer,
   constant::MAX_BUCKET_INDEX,
-  index::{BucketIndexes, get_bucket_indexes},
+  index::BucketIndexes,
   layer::BucketLayer,
   pointer::{IntoPointer, Pointer, TaskRef},
   task::{Task, TaskId, VoidCallback},
@@ -170,7 +170,7 @@ impl TimingWheel {
       }
 
       let index = match indexes
-        .get_or_insert_with(|| get_bucket_indexes(current))
+        .get_or_insert_with(|| BucketIndexes::new(current))
         .get(i)
       {
         None => continue,

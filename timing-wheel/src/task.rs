@@ -1,6 +1,6 @@
 use napi::{Env, Result, bindgen_prelude::FunctionRef};
 
-use crate::index::{BucketIndexes, get_bucket_indexes};
+use crate::index::BucketIndexes;
 
 #[napi]
 pub type VoidCallback = FunctionRef<(), ()>;
@@ -18,6 +18,7 @@ pub struct Task {
   refed: bool,
 }
 impl Task {
+  #[inline]
   pub fn new(
     id: TaskId,
     scheduled_at: usize,
@@ -29,7 +30,7 @@ impl Task {
       id,
       scheduled_at,
       delay,
-      indexes: get_bucket_indexes(scheduled_at + delay),
+      indexes: BucketIndexes::new(scheduled_at + delay),
       callback,
       is_interval,
       refed: true,
@@ -69,7 +70,7 @@ impl Task {
   #[inline]
   pub fn set_scheduled_at(&mut self, scheduled_at: usize) {
     self.scheduled_at = scheduled_at;
-    self.indexes = get_bucket_indexes(scheduled_at + self.delay);
+    self.indexes = BucketIndexes::new(scheduled_at + self.delay);
   }
 
   #[inline]
