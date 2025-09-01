@@ -15,7 +15,7 @@
   "homepage": "https://github.com/qwp0905/timer",
   "scripts": {
     "build": "yarn workspace timing-wheel build; tsc -b tsconfig.build.json",
-    "test": "yarn workspace timing-wheel build:debug; jest --config jest.config.ts",
+    "test": "yarn workspace timing-wheel build; jest --config jest.config.ts",
     "test:cov": "jest --config jest.config.ts --coverage",
     "bench": "scripts/bench"
   },

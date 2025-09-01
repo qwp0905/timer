@@ -132,4 +132,14 @@ describe("TimingWheel", () => {
     advance(1)
     expect(callback).toHaveBeenCalledTimes(2)
   })
+
+  it("should execute task in max delay with delay overflow", () => {
+    const delay = 0xffff_ffff
+    const callback = jest.fn()
+    wheel.register(delay + 100000, callback, false)
+    expect(callback).not.toHaveBeenCalled()
+
+    advance(delay)
+    expect(callback).toHaveBeenCalledTimes(1)
+  })
 })
