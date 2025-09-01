@@ -33,6 +33,6 @@ pub trait AsMillisUsize {
 impl AsMillisUsize for Duration {
   #[inline]
   fn as_millis_usize(&self) -> usize {
-    self.as_secs() as usize * 1000 + self.subsec_millis() as usize
+    1000 * self.as_secs() as usize + self.subsec_millis() as usize
   }
 }
