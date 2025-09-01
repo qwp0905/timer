@@ -11,10 +11,8 @@ pub struct BucketLayer {
 impl BucketLayer {
   #[inline]
   pub fn new(layer_index: usize) -> Self {
-    let mut buckets = Vec::new();
-    buckets.resize_with(BUCKET_SIZE, || None);
     Self {
-      buckets,
+      buckets: vec![None; BUCKET_SIZE],
       layer_index,
       size: 0,
     }
