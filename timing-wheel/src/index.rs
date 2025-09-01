@@ -1,8 +1,8 @@
 use crate::constant::{BUCKET_MASK, BUCKET_SIZE_BIT, MAX_BUCKET_INDEX};
 
 pub struct BucketIndexes {
-  len: usize,
   indexes: [usize; MAX_BUCKET_INDEX],
+  len: usize,
 }
 impl BucketIndexes {
   #[inline]
@@ -15,7 +15,7 @@ impl BucketIndexes {
       current >>= BUCKET_SIZE_BIT;
       len += 1;
     }
-    Self { len, indexes }
+    Self { indexes, len }
   }
 
   #[inline]

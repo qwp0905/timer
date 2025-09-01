@@ -10,7 +10,7 @@ pub type TaskId = u32;
 
 pub struct Task {
   id: TaskId,
-  scheduled_at: usize,
+  execute_at: usize,
   delay: usize,
   indexes: BucketIndexes,
   callback: VoidCallback,
@@ -26,11 +26,12 @@ impl Task {
     callback: VoidCallback,
     is_interval: bool,
   ) -> Self {
+    let execute_at = scheduled_at + delay;
     Self {
       id,
-      scheduled_at,
+      execute_at,
       delay,
-      indexes: BucketIndexes::new(scheduled_at + delay),
+      indexes: BucketIndexes::new(execute_at),
       callback,
       is_interval,
       refed: true,
@@ -44,7 +45,7 @@ impl Task {
 
   #[inline]
   pub fn get_execute_at(&self) -> usize {
-    self.scheduled_at + self.delay
+    self.execute_at
   }
 
   #[inline]
@@ -69,8 +70,8 @@ impl Task {
 
   #[inline]
   pub fn set_scheduled_at(&mut self, scheduled_at: usize) {
-    self.scheduled_at = scheduled_at;
-    self.indexes = BucketIndexes::new(scheduled_at + self.delay);
+    self.execute_at = scheduled_at + self.delay;
+    self.indexes = BucketIndexes::new(self.execute_at);
   }
 
   #[inline]
