@@ -4,7 +4,7 @@ use crate::{
 };
 
 pub struct BucketLayer {
-  buckets: Vec<Option<Vec<TaskRef>>>,
+  buckets: [Option<Vec<TaskRef>>; BUCKET_SIZE],
   layer_index: usize,
   size: usize,
 }
@@ -12,7 +12,7 @@ impl BucketLayer {
   #[inline]
   pub fn new(layer_index: usize) -> Self {
     Self {
-      buckets: vec![None; BUCKET_SIZE],
+      buckets: [const { None }; BUCKET_SIZE],
       layer_index,
       size: 0,
     }
