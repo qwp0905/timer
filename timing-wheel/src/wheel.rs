@@ -153,10 +153,8 @@ impl TimingWheel {
   }
 
   #[inline]
-  fn dropdown(&mut self, current: usize) -> Option<Vec<TaskRef>> {
+  fn dropdown(&mut self, indexes: &BucketIndexes) -> Option<Vec<TaskRef>> {
     let mut dropdown: Option<Vec<TaskRef>> = None;
-    let mut indexes: Option<BucketIndexes> = None;
-
     for (i, layer) in self.layers.iter_mut().enumerate().rev() {
       match (layer.is_empty(), dropdown.take()) {
         (true, None) => continue,
@@ -164,10 +162,7 @@ impl TimingWheel {
         _ => {}
       }
 
-      let index = match indexes
-        .get_or_insert_with(|| BucketIndexes::new(current))
-        .get(i)
-      {
+      let index = match indexes.get(i) {
         None => continue,
         Some(index) => *index,
       };
@@ -183,8 +178,10 @@ impl TimingWheel {
   pub fn tick(&mut self, env: Env) -> Result<()> {
     let now = self.timer.now();
 
+    let mut indexes = BucketIndexes::new(self.current_tick);
     for current in (self.current_tick + 1)..=now {
-      if let Some(tasks) = self.dropdown(current) {
+      indexes.advance();
+      if let Some(tasks) = self.dropdown(&indexes) {
         self.execute_tasks(&env, tasks, current)?;
       }
 

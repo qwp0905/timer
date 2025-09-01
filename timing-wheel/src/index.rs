@@ -24,6 +24,21 @@ impl BucketIndexes {
   }
 
   #[inline]
+  pub fn advance(&mut self) {
+    let mut i = 0;
+    while i < MAX_BUCKET_INDEX {
+      if i == self.len {
+        self.len += 1;
+      }
+      self.indexes[i] = (self.indexes[i] + 1) & BUCKET_MASK;
+      if self.indexes[i] != 0 {
+        break;
+      }
+      i += 1;
+    }
+  }
+
+  #[inline]
   pub fn get(&self, index: usize) -> Option<&usize> {
     if index >= self.len {
       return None;
