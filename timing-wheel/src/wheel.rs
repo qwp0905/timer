@@ -84,11 +84,6 @@ impl TimingWheel {
     }
   }
 
-  #[napi(getter)]
-  pub fn length(&self) -> u32 {
-    self.tasks.len() as u32
-  }
-
   #[napi]
   pub fn is_empty(&self) -> bool {
     self.tasks.is_empty()
@@ -163,10 +158,10 @@ impl TimingWheel {
     let mut indexes: Option<BucketIndexes> = None;
 
     for (i, layer) in self.layers.iter_mut().enumerate().rev() {
-      match dropdown.take() {
-        Some(tasks) => tasks.into_iter().for_each(|task| layer.insert(task)),
-        None if layer.is_empty() => continue,
-        None => {}
+      match (layer.is_empty(), dropdown.take()) {
+        (true, None) => continue,
+        (_, Some(tasks)) => tasks.into_iter().for_each(|task| layer.insert(task)),
+        _ => {}
       }
 
       let index = match indexes

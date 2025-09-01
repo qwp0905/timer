@@ -12,7 +12,6 @@ export declare class TimingWheel {
   clearRef(id: TaskId): void
   isRefEmpty(): boolean
   hasRef(id: TaskId): boolean
-  get length(): number
   isEmpty(): boolean
   refresh(id: TaskId): void
   register(delay: number, callback: VoidCallback, isInterval: boolean): TaskId
