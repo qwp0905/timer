@@ -43,6 +43,7 @@ impl BucketLayer {
   }
 }
 impl Drop for BucketLayer {
+  #[inline]
   fn drop(&mut self) {
     if self.size == 0 {
       return;
