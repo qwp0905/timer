@@ -1,7 +1,7 @@
-use crate::constant::{BUCKET_MASK, BUCKET_SIZE_BIT, MAX_BUCKET_INDEX};
+use crate::constant::{BUCKET_COUNT_BIT, BUCKET_MASK, MAX_BUCKET_COUNT};
 
 pub struct BucketIndexes {
-  indexes: [usize; MAX_BUCKET_INDEX],
+  indexes: [usize; MAX_BUCKET_COUNT],
   len: usize,
 }
 impl BucketIndexes {
@@ -9,10 +9,10 @@ impl BucketIndexes {
   pub fn new(scheduled_at: usize) -> Self {
     let mut len = 0;
     let mut current = scheduled_at;
-    let mut indexes = [0; MAX_BUCKET_INDEX];
+    let mut indexes = [0; MAX_BUCKET_COUNT];
     while current > 0 {
       indexes[len] = current & BUCKET_MASK;
-      current >>= BUCKET_SIZE_BIT;
+      current >>= BUCKET_COUNT_BIT;
       len += 1;
     }
     Self { indexes, len }
@@ -26,7 +26,7 @@ impl BucketIndexes {
   #[inline]
   pub fn advance(&mut self) {
     let mut i = 0;
-    while i < MAX_BUCKET_INDEX {
+    while i < MAX_BUCKET_COUNT {
       if i == self.len {
         self.len += 1;
       }

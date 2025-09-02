@@ -4,7 +4,7 @@ use napi::{Env, JsNumber, Result, bindgen_prelude::Reference};
 
 use crate::{
   TestingTimer,
-  constant::MAX_BUCKET_INDEX,
+  constant::MAX_BUCKET_COUNT,
   index::BucketIndexes,
   layer::{Bucket, BucketLayer},
   pointer::{IntoPointer, Pointer, TaskRef},
@@ -38,7 +38,7 @@ impl TimingWheel {
   fn with_timer(timer: impl Timer + 'static) -> Self {
     Self {
       tasks: Default::default(),
-      layers: Vec::with_capacity(MAX_BUCKET_INDEX),
+      layers: Vec::with_capacity(MAX_BUCKET_COUNT),
       timer: Box::new(timer),
       current_tick: 0,
       ref_count: 0,
