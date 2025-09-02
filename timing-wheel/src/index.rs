@@ -25,8 +25,7 @@ impl BucketIndexes {
 
   #[inline]
   pub fn advance(&mut self) {
-    let mut i = 0;
-    while i < MAX_BUCKET_COUNT {
+    for i in 0..MAX_BUCKET_COUNT {
       if i == self.len {
         self.len += 1;
       }
@@ -34,7 +33,6 @@ impl BucketIndexes {
       if self.indexes[i] != 0 {
         break;
       }
-      i += 1;
     }
   }
 
