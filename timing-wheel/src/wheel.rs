@@ -6,7 +6,7 @@ use crate::{
   TestingTimer,
   constant::MAX_BUCKET_INDEX,
   index::BucketIndexes,
-  layer::BucketLayer,
+  layer::{Bucket, BucketLayer},
   pointer::{IntoPointer, Pointer, TaskRef},
   task::{Task, TaskId, VoidCallback},
   timer::{SystemTimer, Timer},
@@ -153,8 +153,8 @@ impl TimingWheel {
   }
 
   #[inline]
-  fn dropdown(&mut self, indexes: &BucketIndexes) -> Option<Vec<TaskRef>> {
-    let mut dropdown: Option<Vec<TaskRef>> = None;
+  fn dropdown(&mut self, indexes: &BucketIndexes) -> Option<Bucket> {
+    let mut dropdown: Option<Bucket> = None;
     for (i, layer) in self.layers.iter_mut().enumerate().rev() {
       match (layer.is_empty(), dropdown.take()) {
         (true, None) => continue,
@@ -195,7 +195,7 @@ impl TimingWheel {
   }
 
   #[inline]
-  fn execute_tasks(&mut self, env: &Env, tasks: Vec<TaskRef>, current: usize) -> Result<()> {
+  fn execute_tasks(&mut self, env: &Env, tasks: Bucket, current: usize) -> Result<()> {
     for mut task in tasks {
       let task_ref = task.refs();
       if current != task_ref.get_execute_at() {

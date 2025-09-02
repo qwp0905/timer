@@ -3,8 +3,10 @@ use crate::{
   pointer::{Pointer, TaskRef},
 };
 
+pub type Bucket = Vec<TaskRef>;
+
 pub struct BucketLayer {
-  buckets: [Option<Vec<TaskRef>>; BUCKET_SIZE],
+  buckets: [Option<Bucket>; BUCKET_SIZE],
   layer_index: usize,
   size: usize,
 }
@@ -31,7 +33,7 @@ impl BucketLayer {
   }
 
   #[inline]
-  pub fn dropdown(&mut self, bucket: usize) -> Option<Vec<TaskRef>> {
+  pub fn dropdown(&mut self, bucket: usize) -> Option<Bucket> {
     let tasks = match self.buckets[bucket].take() {
       Some(t) => t,
       None => return None,
