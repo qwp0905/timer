@@ -25,15 +25,17 @@ impl BucketIndexes {
 
   #[inline]
   pub fn advance(&mut self) {
-    for i in 0..MAX_BUCKET_COUNT {
-      if i == self.len {
-        self.len += 1;
+    for i in 0..self.len {
+      if self.indexes[i] < BUCKET_MASK {
+        self.indexes[i] += 1;
+        return;
       }
-      self.indexes[i] = (self.indexes[i] + 1) & BUCKET_MASK;
-      if self.indexes[i] != 0 {
-        break;
-      }
+
+      self.indexes[i] = 0;
     }
+
+    self.indexes[self.len] = 1;
+    self.len += 1;
   }
 
   #[inline]
