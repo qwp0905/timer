@@ -26,8 +26,8 @@ export class TaskScheduler {
 
   private onRef = (id: number, hasRef: boolean) =>
     hasRef ? this.wheel.setRef(id) : this.wheel.clearRef(id)
-  private unregister = (task: Task<any, any>) => this.wheel.unregister(task.getId())
-  private refresh = (task: Task<any, any>) => this.wheel.refresh(task.getId())
+  private unregister = (id: number) => this.wheel.unregister(id)
+  private refresh = (id: number) => this.wheel.refresh(id)
   private hasRef = (id: number) => this.wheel.hasRef(id)
 
   setTimeout<T extends any[] = [], R = any>(

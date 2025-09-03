@@ -2,8 +2,8 @@ export interface CreateTaskOptions<T extends any[] = any[], R = any> {
   id: number
   _onTimeout: (...args: T) => R
   onRef: (id: number, hasRef: boolean) => void
-  unregister: (task: Task<T, R>) => void
-  refresh: (task: Task<T, R>) => void
+  unregister: (id: number) => void
+  refresh: (id: number) => void
   hasRef: (id: number) => boolean
 }
 
@@ -12,8 +12,8 @@ export class Task<T extends any[] = any[], R = any> implements NodeJS.Timeout {
   readonly _onTimeout: (...args: T) => R
   private readonly onRef: (id: number, hasRef: boolean) => void
   private readonly _hasRef: (id: number) => boolean
-  private readonly unregister: (task: Task<T, R>) => void
-  private readonly _refresh: (task: Task<T, R>) => void
+  private readonly unregister: (id: number) => void
+  private readonly _refresh: (id: number) => void
 
   constructor({ id, _onTimeout, onRef, unregister, refresh, hasRef }: CreateTaskOptions<T, R>) {
     this.id = id
@@ -25,7 +25,7 @@ export class Task<T extends any[] = any[], R = any> implements NodeJS.Timeout {
   }
 
   close(): this {
-    this.unregister(this)
+    this.unregister(this.id)
     return this
   }
   hasRef(): boolean {
@@ -42,7 +42,7 @@ export class Task<T extends any[] = any[], R = any> implements NodeJS.Timeout {
   }
 
   refresh(): this {
-    this._refresh(this)
+    this._refresh(this.id)
     return this
   }
 
