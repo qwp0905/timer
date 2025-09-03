@@ -186,6 +186,7 @@ impl TimingWheel {
 
       if self.tasks.is_empty() {
         self.layers.clear();
+        break;
       }
     }
 
