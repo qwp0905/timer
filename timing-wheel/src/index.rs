@@ -1,3 +1,5 @@
+use std::ops::Index;
+
 use crate::constant::{BUCKET_COUNT_BIT, BUCKET_MASK, MAX_BUCKET_COUNT};
 
 pub struct BucketIndexes {
@@ -39,7 +41,7 @@ impl BucketIndexes {
   }
 }
 
-impl std::ops::Index<usize> for BucketIndexes {
+impl Index<usize> for BucketIndexes {
   type Output = usize;
 
   #[inline]
