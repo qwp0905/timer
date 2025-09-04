@@ -107,7 +107,7 @@ impl TimingWheel {
   pub fn refresh(&mut self, id: TaskId) {
     let now = self.timer.now();
     let mut task = match self.tasks.get_mut(&id) {
-      Some(task) => task.clone(),
+      Some(task) => *task,
       None => return,
     };
     task.borrow_mut().set_scheduled_at(now);
