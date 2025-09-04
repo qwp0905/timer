@@ -2,12 +2,12 @@ use std::ptr::NonNull;
 
 use crate::task::Task;
 
-pub trait Pointer<T> {
+pub trait UnsafePtr<T> {
   fn borrow(&self) -> &T;
   fn borrow_mut(&mut self) -> &mut T;
   fn deref(self) -> T;
 }
-impl<T> Pointer<T> for NonNull<T> {
+impl<T> UnsafePtr<T> for NonNull<T> {
   #[inline]
   fn borrow(&self) -> &T {
     unsafe { self.as_ref() }
@@ -24,10 +24,10 @@ impl<T> Pointer<T> for NonNull<T> {
   }
 }
 
-pub trait IntoPointer<T> {
+pub trait IntoUnsafePtr<T> {
   fn create_ptr(self) -> NonNull<T>;
 }
-impl<T> IntoPointer<T> for T {
+impl<T> IntoUnsafePtr<T> for T {
   #[inline]
   fn create_ptr(self) -> NonNull<T> {
     NonNull::from(Box::leak(Box::new(self)))

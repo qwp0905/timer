@@ -7,7 +7,7 @@ use crate::{
   constant::{MAX_BUCKET_COUNT, MAX_DELAY, MIN_DELAY},
   index::BucketIndexes,
   layer::{Bucket, BucketLayer},
-  pointer::{IntoPointer, Pointer, TaskRef},
+  pointer::{IntoUnsafePtr, TaskRef, UnsafePtr},
   task::{Task, TaskId, VoidCallback},
   timer::{SystemTimer, Timer},
 };

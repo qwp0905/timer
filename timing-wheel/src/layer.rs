@@ -1,6 +1,6 @@
 use crate::{
   constant::BUCKET_COUNT,
-  pointer::{Pointer, TaskRef},
+  pointer::{TaskRef, UnsafePtr},
 };
 
 pub type Bucket = Vec<TaskRef>;
