@@ -39,6 +39,15 @@ impl BucketIndexes {
     self.indexes[self.len] = 1;
     self.len += 1;
   }
+
+  #[inline]
+  pub fn get(&self, index: usize) -> Option<usize> {
+    if index >= self.len {
+      return None;
+    }
+
+    Some(self.indexes[index])
+  }
 }
 
 impl Index<usize> for BucketIndexes {

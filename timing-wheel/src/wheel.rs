@@ -155,18 +155,15 @@ impl TimingWheel {
   #[inline]
   fn dropdown(&mut self, indexes: &BucketIndexes) -> Option<Bucket> {
     let mut dropdown: Option<Bucket> = None;
-    for i in (0..self.layers.len().min(indexes.len())).rev() {
-      let layer = &mut self.layers[i];
+
+    for (i, layer) in self.layers.iter_mut().enumerate().rev() {
       match (layer.is_empty(), dropdown.take()) {
         (true, None) => continue,
         (_, Some(tasks)) => tasks.into_iter().for_each(|task| layer.insert(task)),
         _ => {}
       }
 
-      match layer.dropdown(indexes[i]) {
-        Some(tasks) => dropdown = Some(tasks),
-        None => continue,
-      }
+      dropdown = indexes.get(i).and_then(|i| layer.dropdown(i));
     }
 
     self.reduce_layers();
