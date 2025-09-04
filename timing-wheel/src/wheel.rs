@@ -4,7 +4,7 @@ use napi::{Env, JsNumber, Result, bindgen_prelude::Reference};
 
 use crate::{
   TestingTimer,
-  constant::MAX_BUCKET_COUNT,
+  constant::{MAX_BUCKET_COUNT, MAX_DELAY, MIN_DELAY},
   index::BucketIndexes,
   layer::{Bucket, BucketLayer},
   pointer::{IntoPointer, Pointer, TaskRef},
@@ -235,5 +235,5 @@ impl TimingWheel {
 fn convert_delay(delay: JsNumber) -> Result<usize> {
   delay
     .get_int64()
-    .map(|n| n.max(1).min(0xffff_ffff) as usize)
+    .map(|n| n.max(MIN_DELAY).min(MAX_DELAY) as usize)
 }
