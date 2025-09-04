@@ -12,5 +12,6 @@ mod test;
 mod timer;
 mod wheel;
 
+pub use task::{TaskId, VoidCallback};
 pub use test::*;
 pub use wheel::TimingWheel;
