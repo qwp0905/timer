@@ -49,7 +49,7 @@ impl TimingWheel {
   #[napi]
   pub fn set_ref(&mut self, id: TaskId) {
     let task = match self.tasks.get_mut(&id) {
-      Some(task) => task.muts(),
+      Some(task) => task.borrow_mut(),
       None => return,
     };
     if task.has_ref() {
@@ -62,7 +62,7 @@ impl TimingWheel {
   #[napi]
   pub fn clear_ref(&mut self, id: TaskId) {
     let task = match self.tasks.get_mut(&id) {
-      Some(task) => task.muts(),
+      Some(task) => task.borrow_mut(),
       None => return,
     };
     if !task.has_ref() {
@@ -79,7 +79,7 @@ impl TimingWheel {
   #[napi]
   pub fn has_ref(&self, id: TaskId) -> bool {
     match self.tasks.get(&id) {
-      Some(task) => task.refs().has_ref(),
+      Some(task) => task.borrow().has_ref(),
       None => false,
     }
   }
@@ -91,7 +91,7 @@ impl TimingWheel {
 
   #[inline]
   fn register_task_ref(&mut self, task: TaskRef) {
-    let task_ref = task.refs();
+    let task_ref = task.borrow();
 
     let layer_size = task_ref.layer_size();
     self.expand_layers(layer_size);
@@ -110,7 +110,7 @@ impl TimingWheel {
       Some(task) => task.clone(),
       None => return,
     };
-    task.muts().set_scheduled_at(now);
+    task.borrow_mut().set_scheduled_at(now);
     self.register_task_ref(task);
   }
 
@@ -146,7 +146,7 @@ impl TimingWheel {
       None => return false,
     };
 
-    if task.refs().has_ref() {
+    if task.borrow().has_ref() {
       self.ref_count -= 1;
     }
     true
@@ -194,24 +194,24 @@ impl TimingWheel {
   #[inline]
   fn execute_tasks(&mut self, env: &Env, tasks: Bucket, current: usize) -> Result<()> {
     for mut task in tasks {
-      let task_ref = task.refs();
+      let task_ref = task.borrow();
       if current != task_ref.get_execute_at() {
         continue;
       }
 
       if !self.unregister_task(task_ref.get_id()) {
-        let _ = task.into_raw();
+        let _ = task.deref();
         continue;
       }
 
       if !task_ref.is_interval() {
-        task.into_raw().execute(&env)?;
+        task.deref().execute(&env)?;
         continue;
       }
 
-      task.muts().set_scheduled_at(current);
+      task.borrow_mut().set_scheduled_at(current);
       self.register_task_ref(task);
-      task.refs().execute(&env)?;
+      task.borrow().execute(&env)?;
     }
     Ok(())
   }

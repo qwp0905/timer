@@ -3,23 +3,23 @@ use std::ptr::NonNull;
 use crate::task::Task;
 
 pub trait Pointer<T> {
-  fn refs(&self) -> &T;
-  fn muts(&mut self) -> &mut T;
-  fn into_raw(self) -> T;
+  fn borrow(&self) -> &T;
+  fn borrow_mut(&mut self) -> &mut T;
+  fn deref(self) -> T;
 }
 impl<T> Pointer<T> for NonNull<T> {
   #[inline]
-  fn refs(&self) -> &T {
+  fn borrow(&self) -> &T {
     unsafe { self.as_ref() }
   }
 
   #[inline]
-  fn muts(&mut self) -> &mut T {
+  fn borrow_mut(&mut self) -> &mut T {
     unsafe { self.as_mut() }
   }
 
   #[inline]
-  fn into_raw(self) -> T {
+  fn deref(self) -> T {
     *unsafe { Box::from_raw(self.as_ptr()) }
   }
 }

@@ -22,7 +22,7 @@ impl BucketLayer {
 
   #[inline]
   pub fn insert(&mut self, task: TaskRef) {
-    let bucket = task.refs().get_bucket_index(self.layer_index);
+    let bucket = task.borrow().get_bucket_index(self.layer_index);
     self.buckets[bucket].get_or_insert_default().push(task);
     self.size += 1;
   }
@@ -54,7 +54,7 @@ impl Drop for BucketLayer {
         None => continue,
       };
       for task in tasks {
-        let _ = task.into_raw();
+        let _ = task.deref();
       }
     }
   }
