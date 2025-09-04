@@ -3,9 +3,9 @@ import { TestingTimer, TimingWheel } from "../timing-wheel"
 const trial = 10
 
 const delay = 0x00ff_ffff
-const count = 1_000_000
+const count = 3_000_000
 const callback = () => {}
-const delays = Array.from({ length: count }, () => Math.random() * delay)
+const delays = Array.from({ length: count }, (_, i) => ((i + 1) * delay) / count)
 
 function runTrial() {
   const timer = new TestingTimer()
