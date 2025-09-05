@@ -171,7 +171,7 @@ impl TimingWheel {
   }
 
   #[napi]
-  pub fn tick(&mut self, env: Env) -> Result<()> {
+  pub fn tick(&mut self, env: &Env) -> Result<()> {
     let now = self.timer.now();
 
     let mut indexes = BucketIndexes::new(self.current_tick);
@@ -179,7 +179,7 @@ impl TimingWheel {
       indexes.advance();
 
       match self.dropdown(&indexes) {
-        Some(tasks) => self.execute_tasks(&env, tasks, current)?,
+        Some(tasks) => self.execute_tasks(env, tasks, current)?,
         None => continue,
       }
 
