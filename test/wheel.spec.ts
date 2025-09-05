@@ -18,7 +18,7 @@ describe("TimingWheel", () => {
     const delay = 1000
     const callback = jest.fn()
 
-    wheel.register(delay, () => callback(), false)
+    wheel.register(delay, callback, false)
     expect(callback).not.toHaveBeenCalled()
 
     advance(delay - 1)
