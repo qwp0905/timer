@@ -1,12 +1,12 @@
 use crate::{
-  constant::BUCKET_COUNT,
+  constant::LAYER_PER_BUCKET,
   pointer::{TaskRef, UnsafePtr},
 };
 
 pub type Bucket = Vec<TaskRef>;
 
 pub struct BucketLayer {
-  buckets: [Option<Bucket>; BUCKET_COUNT],
+  buckets: [Option<Bucket>; LAYER_PER_BUCKET],
   layer_index: usize,
   size: usize,
 }
@@ -14,7 +14,7 @@ impl BucketLayer {
   #[inline]
   pub fn new(layer_index: usize) -> Self {
     Self {
-      buckets: [const { None }; BUCKET_COUNT],
+      buckets: [const { None }; LAYER_PER_BUCKET],
       layer_index,
       size: 0,
     }

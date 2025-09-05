@@ -1,9 +1,9 @@
 use std::ops::Index;
 
-use crate::constant::{BUCKET_COUNT_BIT, BUCKET_MASK, MAX_BUCKET_COUNT};
+use crate::constant::{LAYER_PER_BUCKET_BIT, LAYER_PER_BUCKET_MASK, MAX_LAYER_PER_BUCKET};
 
 pub struct BucketIndexes {
-  indexes: [usize; MAX_BUCKET_COUNT],
+  indexes: [usize; MAX_LAYER_PER_BUCKET],
   len: usize,
 }
 impl BucketIndexes {
@@ -11,10 +11,10 @@ impl BucketIndexes {
   pub fn new(scheduled_at: usize) -> Self {
     let mut len = 0;
     let mut current = scheduled_at;
-    let mut indexes = [0; MAX_BUCKET_COUNT];
+    let mut indexes = [0; MAX_LAYER_PER_BUCKET];
     while current > 0 {
-      indexes[len] = current & BUCKET_MASK;
-      current >>= BUCKET_COUNT_BIT;
+      indexes[len] = current & LAYER_PER_BUCKET_MASK;
+      current >>= LAYER_PER_BUCKET_BIT;
       len += 1;
     }
     Self { indexes, len }
@@ -28,7 +28,7 @@ impl BucketIndexes {
   #[inline]
   pub fn advance(&mut self) {
     for i in self.indexes.iter_mut().take(self.len) {
-      if *i < BUCKET_MASK {
+      if *i < LAYER_PER_BUCKET_MASK {
         *i += 1;
         return;
       }
