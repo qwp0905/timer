@@ -68,6 +68,7 @@ impl TimingWheel {
     if !task.has_ref() {
       return;
     }
+
     task.clear_ref();
     self.ref_count -= 1;
   }
