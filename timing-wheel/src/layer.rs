@@ -34,10 +34,7 @@ impl BucketLayer {
 
   #[inline]
   pub fn dropdown(&mut self, bucket: usize) -> Option<Bucket> {
-    let tasks = match self.buckets[bucket].take() {
-      Some(t) => t,
-      None => return None,
-    };
+    let tasks = self.buckets[bucket].take()?;
     self.size -= tasks.len();
     Some(tasks)
   }

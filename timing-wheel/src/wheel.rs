@@ -97,8 +97,7 @@ impl TimingWheel {
     let layer_size = task_ref.layer_size();
     self.expand_layers(layer_size);
 
-    let id = task_ref.get_id();
-    if self.tasks.insert(id, task).is_none() && task_ref.has_ref() {
+    if self.tasks.insert(task_ref.get_id(), task).is_none() && task_ref.has_ref() {
       self.ref_count += 1
     };
     self.layers[layer_size - 1].insert(task);
@@ -178,8 +177,10 @@ impl TimingWheel {
     let mut indexes = BucketIndexes::new(self.current_tick);
     for current in (self.current_tick + 1)..=now {
       indexes.advance();
-      if let Some(tasks) = self.dropdown(&indexes) {
-        self.execute_tasks(&env, tasks, current)?;
+
+      match self.dropdown(&indexes) {
+        Some(tasks) => self.execute_tasks(&env, tasks, current)?,
+        None => continue,
       }
 
       if self.tasks.is_empty() {
