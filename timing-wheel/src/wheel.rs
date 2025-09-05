@@ -196,7 +196,7 @@ impl TimingWheel {
   #[inline]
   fn execute_tasks(&mut self, env: &Env, tasks: Bucket, current: usize) -> Result<()> {
     for mut task in tasks {
-      let task_ref = task.borrow();
+      let task_ref = task.borrow_mut();
       if current != task_ref.get_execute_at() {
         continue;
       }
@@ -211,7 +211,7 @@ impl TimingWheel {
         continue;
       }
 
-      task.borrow_mut().set_scheduled_at(current);
+      task_ref.set_scheduled_at(current);
       self.register_task_ref(task);
       task.borrow().execute(&env)?;
     }
