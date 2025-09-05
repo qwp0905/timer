@@ -76,7 +76,10 @@ export class TaskScheduler {
       case "string":
         return this.wheel.unregister(Number(task))
       default:
-        return task.close()
+        if (!(task instanceof Task)) {
+          return
+        }
+        task.close()
     }
   }
   clearInterval(task: number | string | Task<any, any>) {
@@ -86,7 +89,10 @@ export class TaskScheduler {
       case "string":
         return this.wheel.unregister(Number(task))
       default:
-        return task.close()
+        if (!(task instanceof Task)) {
+          return
+        }
+        task.close()
     }
   }
 }
