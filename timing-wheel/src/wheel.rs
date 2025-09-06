@@ -114,6 +114,13 @@ impl TimingWheel {
     self.register_task_ref(task);
   }
 
+  #[inline]
+  pub fn new_id(&mut self) -> TaskId {
+    let id = self.last_id;
+    self.last_id = self.last_id.checked_add(1).unwrap_or(0);
+    id
+  }
+
   #[napi]
   pub fn register(
     &mut self,
@@ -126,9 +133,8 @@ impl TimingWheel {
       self.timer.reset();
       self.current_tick = 0;
     }
-    let id = self.last_id;
-    self.last_id += 1;
 
+    let id = self.new_id();
     let task = Task::new(id, self.timer.now(), delay, callback, is_interval);
     self.register_task_ref(task.create_ptr());
     Ok(id)
@@ -141,14 +147,13 @@ impl TimingWheel {
 
   #[inline]
   fn unregister_task(&mut self, id: TaskId) -> bool {
-    let task = match self.tasks.remove(&id) {
-      Some(task) => task,
+    if match self.tasks.remove(&id) {
+      Some(task) => task.borrow().has_ref(),
       None => return false,
+    } {
+      self.ref_count -= 1;
     };
 
-    if task.borrow().has_ref() {
-      self.ref_count -= 1;
-    }
     true
   }
 
