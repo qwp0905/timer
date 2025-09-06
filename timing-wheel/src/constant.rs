@@ -5,4 +5,4 @@ pub const MAX_LAYER_PER_BUCKET: usize =
   (usize::MAX.checked_ilog2().unwrap() as usize).div_ceil(LAYER_PER_BUCKET_BIT);
 
 pub const MIN_DELAY: i64 = 1;
-pub const MAX_DELAY: i64 = 0xffff_ffff;
+pub const MAX_DELAY: i64 = u32::MAX as i64;
