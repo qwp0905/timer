@@ -9,15 +9,20 @@ pub struct BucketIndexes {
 impl BucketIndexes {
   #[inline]
   pub fn new(scheduled_at: usize) -> Self {
-    let mut len = 0;
     let mut current = scheduled_at;
     let mut indexes = [0; MAX_LAYER_PER_BUCKET];
-    while current > 0 {
+    for len in 0..MAX_LAYER_PER_BUCKET {
+      if current == 0 {
+        return Self { indexes, len };
+      }
       indexes[len] = current & LAYER_PER_BUCKET_MASK;
       current >>= LAYER_PER_BUCKET_BIT;
-      len += 1;
     }
-    Self { indexes, len }
+
+    Self {
+      indexes,
+      len: MAX_LAYER_PER_BUCKET,
+    }
   }
 
   #[inline]
