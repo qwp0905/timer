@@ -1,7 +1,4 @@
-use crate::{
-  constant::LAYER_PER_BUCKET,
-  pointer::{TaskRef, UnsafePtr},
-};
+use crate::{constant::LAYER_PER_BUCKET, pointer::UnsafePtr, task::TaskRef};
 
 pub type Bucket = Vec<TaskRef>;
 

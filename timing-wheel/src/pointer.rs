@@ -1,7 +1,5 @@
 use std::ptr::NonNull;
 
-use crate::task::Task;
-
 pub trait UnsafePtr<T> {
   fn borrow(&self) -> &T;
   fn borrow_mut(&mut self) -> &mut T;
@@ -33,5 +31,3 @@ impl<T> IntoUnsafePtr<T> for T {
     NonNull::from(Box::leak(Box::new(self)))
   }
 }
-
-pub type TaskRef = NonNull<Task>;

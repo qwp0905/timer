@@ -1,3 +1,5 @@
+use std::ptr::NonNull;
+
 use napi::{Env, Result, bindgen_prelude::FunctionRef};
 
 use crate::index::BucketIndexes;
@@ -89,3 +91,5 @@ impl Task {
     self.refed = false
   }
 }
+
+pub type TaskRef = NonNull<Task>;
