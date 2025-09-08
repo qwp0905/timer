@@ -4,8 +4,8 @@ use napi::{Env, JsNumber, Result, bindgen_prelude::Reference};
 
 use crate::{
   TestingTimer,
+  clock::ClockHands,
   constant::{MAX_DELAY, MAX_LAYER_PER_BUCKET, MIN_DELAY},
-  index::BucketIndexes,
   layer::{Bucket, BucketLayer},
   pointer::{IntoUnsafePtr, UnsafePtr},
   task::{Task, TaskId, TaskRef, VoidCallback},
@@ -18,6 +18,7 @@ pub struct TimingWheel {
   layers: Vec<BucketLayer>,
   timer: Box<dyn Timer>,
   current_tick: usize,
+  hands: ClockHands,
   ref_count: usize,
   last_id: TaskId,
 }
@@ -41,6 +42,7 @@ impl TimingWheel {
       layers: Vec::with_capacity(MAX_LAYER_PER_BUCKET),
       timer: Box::new(timer),
       current_tick: 0,
+      hands: ClockHands::empty(),
       ref_count: 0,
       last_id: 0,
     }
@@ -121,6 +123,13 @@ impl TimingWheel {
     id
   }
 
+  #[inline]
+  fn reset(&mut self) {
+    self.timer.reset();
+    self.current_tick = 0;
+    self.hands = ClockHands::empty();
+  }
+
   #[napi]
   pub fn register(
     &mut self,
@@ -130,8 +139,7 @@ impl TimingWheel {
   ) -> Result<TaskId> {
     let delay = convert_delay(delay)?;
     if self.tasks.is_empty() {
-      self.timer.reset();
-      self.current_tick = 0;
+      self.reset();
     }
 
     let id = self.new_id();
@@ -158,7 +166,7 @@ impl TimingWheel {
   }
 
   #[inline]
-  fn dropdown(&mut self, indexes: &BucketIndexes) -> Option<Bucket> {
+  fn dropdown(&mut self) -> Option<Bucket> {
     let mut dropdown: Option<Bucket> = None;
 
     for (i, layer) in self.layers.iter_mut().enumerate().rev() {
@@ -168,7 +176,7 @@ impl TimingWheel {
         _ => {}
       }
 
-      dropdown = indexes.get(i).and_then(|i| layer.dropdown(i));
+      dropdown = self.hands.get(i).and_then(|i| layer.dropdown(i));
     }
 
     self.reduce_layers();
@@ -179,11 +187,10 @@ impl TimingWheel {
   pub fn tick(&mut self, env: &Env) -> Result<()> {
     let now = self.timer.now();
 
-    let mut indexes = BucketIndexes::new(self.current_tick);
     for current in (self.current_tick + 1)..=now {
-      indexes.advance();
+      self.hands.advance();
 
-      match self.dropdown(&indexes) {
+      match self.dropdown() {
         Some(tasks) => self.execute_tasks(env, tasks, current)?,
         None => continue,
       }

@@ -2,11 +2,11 @@ use std::ops::Index;
 
 use crate::constant::{LAYER_PER_BUCKET_BIT, LAYER_PER_BUCKET_MASK, MAX_LAYER_PER_BUCKET};
 
-pub struct BucketIndexes {
+pub struct ClockHands {
   indexes: [usize; MAX_LAYER_PER_BUCKET],
   len: usize,
 }
-impl BucketIndexes {
+impl ClockHands {
   #[inline]
   pub fn new(scheduled_at: usize) -> Self {
     let mut current = scheduled_at;
@@ -22,6 +22,14 @@ impl BucketIndexes {
     Self {
       indexes,
       len: MAX_LAYER_PER_BUCKET,
+    }
+  }
+
+  #[inline]
+  pub fn empty() -> Self {
+    Self {
+      indexes: [0; MAX_LAYER_PER_BUCKET],
+      len: 0,
     }
   }
 
@@ -55,7 +63,7 @@ impl BucketIndexes {
   }
 }
 
-impl Index<usize> for BucketIndexes {
+impl Index<usize> for ClockHands {
   type Output = usize;
 
   #[inline]

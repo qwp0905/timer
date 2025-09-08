@@ -3,8 +3,8 @@
 #[macro_use]
 extern crate napi_derive;
 
+mod clock;
 mod constant;
-mod index;
 mod layer;
 mod pointer;
 mod task;
