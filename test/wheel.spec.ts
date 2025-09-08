@@ -75,6 +75,31 @@ describe("TimingWheel", () => {
     expect(callback).toHaveBeenCalledTimes(1)
   })
 
+  it("should execute task after wheel is empty", () => {
+    const callback = jest.fn()
+    const delay = 1000
+    wheel.register(delay, callback, false)
+    expect(callback).not.toHaveBeenCalled()
+
+    advance(delay - 1)
+    expect(callback).not.toHaveBeenCalled()
+
+    advance(delay)
+    expect(callback).toHaveBeenCalledTimes(1)
+
+    advance(delay)
+    expect(callback).toHaveBeenCalledTimes(1)
+
+    wheel.register(delay, callback, false)
+    expect(callback).toHaveBeenCalledTimes(1)
+
+    advance(delay - 1)
+    expect(callback).toHaveBeenCalledTimes(1)
+
+    advance(1)
+    expect(callback).toHaveBeenCalledTimes(2)
+  })
+
   it("should cancel interval task in interval callback", () => {
     let callback
     const interval = 1000
