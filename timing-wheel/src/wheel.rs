@@ -212,13 +212,13 @@ impl TimingWheel {
       }
 
       if !task_ref.is_interval() {
-        task.deref().execute(&env)?;
+        task.deref().execute(env)?;
         continue;
       }
 
       task_ref.set_scheduled_at(current);
       self.register_task_ref(task);
-      task.borrow().execute(&env)?;
+      task.borrow().execute(env)?;
     }
     Ok(())
   }
