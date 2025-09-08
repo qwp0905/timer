@@ -26,11 +26,9 @@ impl ClockHands {
   }
 
   #[inline]
-  pub fn empty() -> Self {
-    Self {
-      indexes: [0; MAX_LAYER_PER_BUCKET],
-      len: 0,
-    }
+  pub fn reset(&mut self) {
+    self.len = 0;
+    self.indexes = [0; MAX_LAYER_PER_BUCKET];
   }
 
   #[inline]

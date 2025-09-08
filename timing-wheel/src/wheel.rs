@@ -42,7 +42,7 @@ impl TimingWheel {
       layers: Vec::with_capacity(MAX_LAYER_PER_BUCKET),
       timer: Box::new(timer),
       current_tick: 0,
-      hands: ClockHands::empty(),
+      hands: ClockHands::new(0),
       ref_count: 0,
       last_id: 0,
     }
@@ -127,7 +127,7 @@ impl TimingWheel {
   fn reset(&mut self) {
     self.timer.reset();
     self.current_tick = 0;
-    self.hands = ClockHands::empty();
+    self.hands.reset();
   }
 
   #[napi]
