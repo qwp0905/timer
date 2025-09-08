@@ -3,24 +3,24 @@ use std::ops::Index;
 use crate::constant::{LAYER_PER_BUCKET_BIT, LAYER_PER_BUCKET_MASK, MAX_LAYER_PER_BUCKET};
 
 pub struct ClockHands {
-  indexes: [usize; MAX_LAYER_PER_BUCKET],
+  hands: [usize; MAX_LAYER_PER_BUCKET],
   len: usize,
 }
 impl ClockHands {
   #[inline]
   pub fn new(scheduled_at: usize) -> Self {
     let mut current = scheduled_at;
-    let mut indexes = [0; MAX_LAYER_PER_BUCKET];
+    let mut hands = [0; MAX_LAYER_PER_BUCKET];
     for len in 0..MAX_LAYER_PER_BUCKET {
       if current == 0 {
-        return Self { indexes, len };
+        return Self { hands, len };
       }
-      indexes[len] = current & LAYER_PER_BUCKET_MASK;
+      hands[len] = current & LAYER_PER_BUCKET_MASK;
       current >>= LAYER_PER_BUCKET_BIT;
     }
 
     Self {
-      indexes,
+      hands,
       len: MAX_LAYER_PER_BUCKET,
     }
   }
@@ -28,7 +28,7 @@ impl ClockHands {
   #[inline]
   pub fn reset(&mut self) {
     self.len = 0;
-    self.indexes = [0; MAX_LAYER_PER_BUCKET];
+    self.hands = [0; MAX_LAYER_PER_BUCKET];
   }
 
   #[inline]
@@ -38,7 +38,7 @@ impl ClockHands {
 
   #[inline]
   pub fn advance(&mut self) {
-    for i in self.indexes.iter_mut().take(self.len) {
+    for i in self.hands.iter_mut().take(self.len) {
       if *i < LAYER_PER_BUCKET_MASK {
         *i += 1;
         return;
@@ -47,7 +47,7 @@ impl ClockHands {
       *i = 0;
     }
 
-    self.indexes[self.len] = 1;
+    self.hands[self.len] = 1;
     self.len += 1;
   }
 
@@ -57,7 +57,7 @@ impl ClockHands {
       return None;
     }
 
-    Some(self.indexes[index])
+    Some(self.hands[index])
   }
 }
 
@@ -66,6 +66,6 @@ impl Index<usize> for ClockHands {
 
   #[inline]
   fn index(&self, index: usize) -> &Self::Output {
-    &self.indexes[index]
+    &self.hands[index]
   }
 }
