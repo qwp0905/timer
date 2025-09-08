@@ -127,4 +127,10 @@ describe("TaskScheduler", () => {
     expect(callback1).toHaveBeenCalledTimes(1)
     expect(callback2).toHaveBeenCalledTimes(1)
   })
+
+  it("should not throw error when task is not typeof Task", () => {
+    scheduler.clearTimeout(null as any)
+    scheduler.clearInterval(undefined as any)
+    scheduler.clearTimeout({} as any)
+  })
 })
