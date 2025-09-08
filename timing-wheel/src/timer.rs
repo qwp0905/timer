@@ -1,4 +1,4 @@
-use std::time::{Duration, Instant};
+use std::time::Instant;
 
 pub trait Timer {
   fn reset(&mut self);
@@ -18,21 +18,12 @@ impl SystemTimer {
 impl Timer for SystemTimer {
   #[inline]
   fn now(&self) -> usize {
-    self.started_at.elapsed().as_millis_usize()
+    let elapsed = self.started_at.elapsed();
+    1000 * elapsed.as_secs() as usize + elapsed.subsec_millis() as usize
   }
 
   #[inline]
   fn reset(&mut self) {
     self.started_at = Instant::now();
-  }
-}
-
-pub trait AsMillisUsize {
-  fn as_millis_usize(&self) -> usize;
-}
-impl AsMillisUsize for Duration {
-  #[inline]
-  fn as_millis_usize(&self) -> usize {
-    1000 * self.as_secs() as usize + self.subsec_millis() as usize
   }
 }
