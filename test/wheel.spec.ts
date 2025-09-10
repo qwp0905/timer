@@ -158,6 +158,20 @@ describe("TimingWheel", () => {
     expect(callback).toHaveBeenCalledTimes(2)
   })
 
+  it("should be empty after execution", () => {
+    const callback = jest.fn()
+    const delay = 1000
+    wheel.register(delay, callback, false)
+    expect(callback).not.toHaveBeenCalled()
+    expect(wheel.isEmpty()).toBe(false)
+    expect(wheel.isRefEmpty()).toBe(false)
+
+    advance(delay)
+    expect(callback).toHaveBeenCalledTimes(1)
+    expect(wheel.isEmpty()).toBe(true)
+    expect(wheel.isRefEmpty()).toBe(true)
+  })
+
   it("should execute task in max delay with delay overflow", () => {
     const delay = 0xffff_ffff
     const callback = jest.fn()
