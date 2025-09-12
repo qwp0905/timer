@@ -12,9 +12,8 @@ pub type TaskId = u32;
 
 pub struct Task {
   id: TaskId,
-  execute_at: usize,
   delay: usize,
-  hands: ClockHands,
+  clock_hands: ClockHands,
   callback: VoidCallback,
   is_interval: bool,
   refed: bool,
@@ -28,12 +27,10 @@ impl Task {
     callback: VoidCallback,
     is_interval: bool,
   ) -> Self {
-    let execute_at = scheduled_at + delay;
     Self {
       id,
-      execute_at,
       delay,
-      hands: ClockHands::new(execute_at),
+      clock_hands: ClockHands::new(scheduled_at + delay),
       callback,
       is_interval,
       refed: true,
@@ -47,17 +44,17 @@ impl Task {
 
   #[inline]
   pub fn get_execute_at(&self) -> usize {
-    self.execute_at
+    self.clock_hands.timestamp()
   }
 
   #[inline]
   pub fn get_bucket_index(&self, layer_index: usize) -> usize {
-    self.hands[layer_index]
+    self.clock_hands[layer_index]
   }
 
   #[inline]
   pub fn layer_size(&self) -> usize {
-    self.hands.len()
+    self.clock_hands.len()
   }
 
   #[inline]
@@ -72,8 +69,7 @@ impl Task {
 
   #[inline]
   pub fn set_scheduled_at(&mut self, scheduled_at: usize) {
-    self.execute_at = scheduled_at + self.delay;
-    self.hands = ClockHands::new(self.execute_at);
+    self.clock_hands = ClockHands::new(scheduled_at + self.delay);
   }
 
   #[inline]

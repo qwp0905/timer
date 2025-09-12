@@ -17,8 +17,7 @@ pub struct TimingWheel {
   tasks: HashMap<TaskId, TaskRef>,
   layers: Vec<BucketLayer>,
   timer: Box<dyn Timer>,
-  current_tick: usize,
-  hands: ClockHands,
+  clock_hands: ClockHands,
   ref_count: usize,
   last_id: TaskId,
 }
@@ -41,8 +40,7 @@ impl TimingWheel {
       tasks: Default::default(),
       layers: Vec::with_capacity(MAX_LAYER_PER_BUCKET),
       timer: Box::new(timer),
-      current_tick: 0,
-      hands: ClockHands::new(0),
+      clock_hands: ClockHands::new(0),
       ref_count: 0,
       last_id: 0,
     }
@@ -126,8 +124,7 @@ impl TimingWheel {
   #[inline]
   fn reset(&mut self) {
     self.timer.reset();
-    self.current_tick = 0;
-    self.hands.reset();
+    self.clock_hands.reset();
   }
 
   #[napi]
@@ -176,7 +173,7 @@ impl TimingWheel {
         _ => {}
       }
 
-      dropdown = self.hands.get(i).and_then(|i| layer.dropdown(i));
+      dropdown = self.clock_hands.get(i).and_then(|i| layer.dropdown(i));
     }
 
     self.reduce_layers();
@@ -187,11 +184,11 @@ impl TimingWheel {
   pub fn tick(&mut self, env: &Env) -> Result<()> {
     let now = self.timer.now();
 
-    for current in (self.current_tick + 1)..=now {
-      self.hands.advance();
+    while self.clock_hands.is_before(now) {
+      self.clock_hands.advance();
 
       match self.dropdown() {
-        Some(tasks) => self.execute_tasks(env, tasks, current)?,
+        Some(tasks) => self.execute_tasks(env, tasks)?,
         None => continue,
       }
 
@@ -201,12 +198,12 @@ impl TimingWheel {
       }
     }
 
-    self.current_tick = now;
     Ok(())
   }
 
   #[inline]
-  fn execute_tasks(&mut self, env: &Env, tasks: Bucket, current: usize) -> Result<()> {
+  fn execute_tasks(&mut self, env: &Env, tasks: Bucket) -> Result<()> {
+    let current = self.clock_hands.timestamp();
     for mut task in tasks {
       let task_ref = task.borrow_mut();
       if current != task_ref.get_execute_at() {
