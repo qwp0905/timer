@@ -18,6 +18,37 @@ describe("TaskScheduler", () => {
     Object.assign(scheduler, { wheel })
   })
 
+  it("should call with additional arguments at timeout", async () => {
+    const callback = jest.fn()
+    const delay = 100
+    scheduler.setTimeout(callback, delay, 1, 2, 3)
+    expect(callback).not.toHaveBeenCalled()
+
+    await advance(delay - 1)
+    expect(callback).not.toHaveBeenCalled()
+
+    await advance(1)
+    expect(callback).toHaveBeenCalledWith(1, 2, 3)
+  })
+
+  it("should call with additional arguments at interval", async () => {
+    const callback = jest.fn()
+    const delay = 100
+    const task = scheduler.setInterval(callback, delay, 1, 2, 3)
+    expect(callback).not.toHaveBeenCalled()
+
+    await advance(delay)
+    expect(callback).toHaveBeenNthCalledWith(1, 1, 2, 3)
+
+    await advance(delay)
+    expect(callback).toHaveBeenNthCalledWith(2, 1, 2, 3)
+
+    await advance(delay)
+    expect(callback).toHaveBeenNthCalledWith(3, 1, 2, 3)
+
+    scheduler.clearInterval(task)
+  })
+
   it("should execute timeout immediately when delay under 1", async () => {
     const callback = jest.fn()
     scheduler.setTimeout(callback)
