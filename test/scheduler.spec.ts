@@ -129,8 +129,12 @@ describe("TaskScheduler", () => {
   })
 
   it("should not throw error when task is not typeof Task", async () => {
-    expect(Promise.resolve().then(() => scheduler.clearTimeout(null!))).resolves.not.toThrow()
-    expect(Promise.resolve().then(() => scheduler.clearInterval(undefined!))).resolves.not.toThrow()
-    expect(Promise.resolve().then(() => scheduler.clearTimeout({} as any))).resolves.not.toThrow()
+    await expect(Promise.resolve().then(() => scheduler.clearTimeout(null!))).resolves.not.toThrow()
+    await expect(
+      Promise.resolve().then(() => scheduler.clearInterval(undefined!))
+    ).resolves.not.toThrow()
+    await expect(
+      Promise.resolve().then(() => scheduler.clearTimeout({} as any))
+    ).resolves.not.toThrow()
   })
 })
