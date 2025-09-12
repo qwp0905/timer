@@ -37,7 +37,7 @@ export class TaskScheduler {
   ): Task<T, R> {
     const isEmpty = this.wheel.isEmpty()
     const task = new Task({
-      id: this.wheel.register(delay, createCallback(callback, args), false),
+      id: this.wheel.register(delay, bind(callback, args), false),
       _onTimeout: callback,
       onRef: this.onRef,
       unregister: this.unregister,
@@ -56,7 +56,7 @@ export class TaskScheduler {
   ): Task<T, R> {
     const isEmpty = this.wheel.isEmpty()
     const task = new Task({
-      id: this.wheel.register(delay, createCallback(callback, args), true),
+      id: this.wheel.register(delay, bind(callback, args), true),
       _onTimeout: callback,
       onRef: this.onRef,
       unregister: this.unregister,
@@ -97,6 +97,6 @@ export class TaskScheduler {
   }
 }
 
-function createCallback(callback: (...args: any[]) => any, args: any[]) {
+function bind(callback: (...args: any[]) => any, args: any[]) {
   return callback.bind(null, ...args)
 }
