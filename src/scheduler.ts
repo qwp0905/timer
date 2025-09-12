@@ -24,8 +24,8 @@ export class TaskScheduler {
     immediate.unref()
   }
 
-  private onRef = (id: number, hasRef: boolean) =>
-    hasRef ? this.wheel.setRef(id) : this.wheel.clearRef(id)
+  private setRef = (id: number) => this.wheel.setRef(id)
+  private clearRef = (id: number) => this.wheel.clearRef(id)
   private unregister = (id: number) => this.wheel.unregister(id)
   private refresh = (id: number) => this.wheel.refresh(id)
   private hasRef = (id: number) => this.wheel.hasRef(id)
@@ -39,7 +39,8 @@ export class TaskScheduler {
     const task = new Task({
       id: this.wheel.register(delay, bind(callback, args), false),
       _onTimeout: callback,
-      onRef: this.onRef,
+      setRef: this.setRef,
+      clearRef: this.clearRef,
       unregister: this.unregister,
       refresh: this.refresh,
       hasRef: this.hasRef
@@ -58,7 +59,8 @@ export class TaskScheduler {
     const task = new Task({
       id: this.wheel.register(delay, bind(callback, args), true),
       _onTimeout: callback,
-      onRef: this.onRef,
+      setRef: this.setRef,
+      clearRef: this.clearRef,
       unregister: this.unregister,
       refresh: this.refresh,
       hasRef: this.hasRef
@@ -92,7 +94,7 @@ export class TaskScheduler {
         if (!(task instanceof Task)) {
           return
         }
-        task.close()
+        this.wheel.unregister(task.getId())
     }
   }
 }
