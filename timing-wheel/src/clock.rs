@@ -49,12 +49,16 @@ impl ClockHands {
   }
 
   #[inline]
-  pub fn advance(&mut self) {
+  pub fn advance_until(&mut self, timestamp: usize) -> bool {
+    if self.timestamp >= timestamp {
+      return false;
+    }
+
     self.timestamp += 1;
     for i in self.hands.iter_mut().take(self.len) {
       if *i < LAYER_PER_BUCKET_MASK {
         *i += 1;
-        return;
+        return true;
       }
 
       *i = 0;
@@ -62,6 +66,7 @@ impl ClockHands {
 
     self.hands[self.len] = 1;
     self.len += 1;
+    true
   }
 
   #[inline]
@@ -71,11 +76,6 @@ impl ClockHands {
     }
 
     Some(self.hands[index])
-  }
-
-  #[inline]
-  pub fn is_before(&self, now: usize) -> bool {
-    self.timestamp < now
   }
 }
 

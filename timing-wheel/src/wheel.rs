@@ -184,9 +184,7 @@ impl TimingWheel {
   pub fn tick(&mut self, env: &Env) -> Result<()> {
     let now = self.timer.now();
 
-    while self.clock_hands.is_before(now) {
-      self.clock_hands.advance();
-
+    while self.clock_hands.advance_until(now) {
       match self.dropdown() {
         Some(tasks) => self.execute_tasks(env, tasks)?,
         None => continue,
