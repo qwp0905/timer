@@ -98,5 +98,5 @@ export class TaskScheduler {
 }
 
 function createCallback(callback: (...args: any[]) => any, args: any[]) {
-  return () => callback(...args)
+  return callback.bind(null, ...args)
 }
