@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use napi::{Env, JsNumber, Result, bindgen_prelude::Reference};
+use napi::{JsNumber, bindgen_prelude::*};
 
 use crate::{
   TestingTimer,
