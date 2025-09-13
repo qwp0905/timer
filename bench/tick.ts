@@ -2,16 +2,14 @@ import { TestingTimer, TimingWheel } from "../timing-wheel"
 
 const trial = 10
 
-const delay = 0x00ff_ffff
-const count = 3_000_000
+const delay = 3_000_000
 const callback = () => {}
-const delays = Array.from({ length: count }, (_, i) => ((i + 1) * delay) / count)
 
 function runTrial() {
   const timer = new TestingTimer()
   const wheel = TimingWheel.withTesting(timer)
-  for (const delay of delays) {
-    wheel.register(delay, callback, false)
+  for (let i = 0; i < delay; i += 1) {
+    wheel.register(i, callback, false)
   }
 
   timer.advance(delay)
@@ -22,7 +20,7 @@ function runTrial() {
 
 function runBenchmark() {
   console.log("--------------------------------")
-  console.log(`Running benchmark with ${count.toLocaleString()} timers, ${trial} trials`)
+  console.log(`Running benchmark with ${delay.toLocaleString()} timers, ${trial} trials`)
   console.log("--------------------------------")
   const results = []
   for (let i = 0; i < trial; i += 1) {
