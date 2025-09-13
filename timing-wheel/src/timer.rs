@@ -9,6 +9,7 @@ pub struct SystemTimer {
   started_at: Instant,
 }
 impl SystemTimer {
+  #[inline]
   pub fn new() -> Self {
     Self {
       started_at: Instant::now(),
