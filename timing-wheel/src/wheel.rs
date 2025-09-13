@@ -16,8 +16,8 @@ use crate::{
 pub struct TimingWheel {
   tasks: HashMap<TaskId, TaskRef>,
   layers: Vec<BucketLayer>,
-  timer: Box<dyn Timer>,
   clock_hands: ClockHands,
+  timer: Box<dyn Timer>,
   ref_count: usize,
   last_id: TaskId,
 }
