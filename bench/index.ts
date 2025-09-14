@@ -5,6 +5,7 @@ import { promisify } from "util"
 const COUNT = 1_000_000 // Number of timers per trial
 const TRIALS = 5 // Number of trials per test
 const GC_DELAY_PER_TRIAL = 3000
+const callback = () => {}
 
 const testSets = Array.from({ length: COUNT }, (_, i) => (COUNT - i) * 100)
 
@@ -36,7 +37,7 @@ async function runTrial(): Promise<TrialResult> {
   // setTimeout benchmark
   const setTimeoutStart = performance.now()
   for (const delay of testSets) {
-    const timeout = setTimeout(() => {}, delay)
+    const timeout = setTimeout(callback, delay)
     arr.push(timeout)
   }
 
