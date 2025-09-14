@@ -6,7 +6,7 @@ const COUNT = 1_000_000 // Number of timers per trial
 const TRIALS = 5 // Number of trials per test
 const GC_DELAY_PER_TRIAL = 3000
 
-const testSets = Array.from({ length: COUNT }, () => 1000 + Math.random() * 10000000)
+const testSets = Array.from({ length: COUNT }, (_, i) => (COUNT - i) * 100)
 
 // Trial result interface
 interface TrialResult {
