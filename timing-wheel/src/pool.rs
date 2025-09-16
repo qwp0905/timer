@@ -9,18 +9,18 @@ use crate::{
   pointer::{IntoUnsafePtr, UnsafePtr},
 };
 
-pub struct Buffer {
+pub struct ClockVector {
   data: [usize; MAX_LAYER_PER_BUCKET],
-  store: NonNull<BufferStore>,
+  store: NonNull<VectorStore>,
 }
-impl Buffer {
+impl ClockVector {
   #[inline]
-  fn with(store: NonNull<BufferStore>, data: [usize; MAX_LAYER_PER_BUCKET]) -> Self {
+  fn with(store: NonNull<VectorStore>, data: [usize; MAX_LAYER_PER_BUCKET]) -> Self {
     Self { data, store }
   }
 
   #[inline]
-  fn new(store: NonNull<BufferStore>) -> Self {
+  fn new(store: NonNull<VectorStore>) -> Self {
     Self::with(store, [0; MAX_LAYER_PER_BUCKET])
   }
 
@@ -29,7 +29,7 @@ impl Buffer {
     self.data.iter_mut()
   }
 }
-impl Drop for Buffer {
+impl Drop for ClockVector {
   #[inline]
   fn drop(&mut self) {
     let buf = self.store.borrow_mut();
@@ -39,7 +39,7 @@ impl Drop for Buffer {
     buf.data.push(self.data);
   }
 }
-impl Index<usize> for Buffer {
+impl Index<usize> for ClockVector {
   type Output = usize;
 
   #[inline]
@@ -47,44 +47,44 @@ impl Index<usize> for Buffer {
     &self.data[index]
   }
 }
-impl IndexMut<usize> for Buffer {
+impl IndexMut<usize> for ClockVector {
   #[inline]
   fn index_mut(&mut self, index: usize) -> &mut Self::Output {
     &mut self.data[index]
   }
 }
 
-pub struct BufferPool {
-  buffers: NonNull<BufferStore>,
+pub struct VectorPool {
+  buffers: NonNull<VectorStore>,
 }
-impl BufferPool {
+impl VectorPool {
   #[inline]
   pub fn new(cap: usize) -> Self {
     Self {
-      buffers: BufferStore::new(cap).create_ptr(),
+      buffers: VectorStore::new(cap).create_ptr(),
     }
   }
 
   #[inline]
-  pub fn acquire(&mut self) -> Buffer {
+  pub fn acquire(&mut self) -> ClockVector {
     match self.buffers.borrow_mut().data.pop() {
-      Some(data) => Buffer::with(self.buffers, data),
-      None => Buffer::new(self.buffers),
+      Some(data) => ClockVector::with(self.buffers, data),
+      None => ClockVector::new(self.buffers),
     }
   }
 }
-impl Drop for BufferPool {
+impl Drop for VectorPool {
   #[inline]
   fn drop(&mut self) {
     let _ = self.buffers.deref();
   }
 }
 
-struct BufferStore {
+struct VectorStore {
   data: Vec<[usize; MAX_LAYER_PER_BUCKET]>,
   cap: usize,
 }
-impl BufferStore {
+impl VectorStore {
   fn new(cap: usize) -> Self {
     Self {
       data: Vec::with_capacity(cap),

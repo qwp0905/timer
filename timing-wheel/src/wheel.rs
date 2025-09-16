@@ -8,7 +8,7 @@ use crate::{
   constant::{MAX_DELAY, MAX_LAYER_PER_BUCKET, MIN_DELAY},
   layer::{Bucket, BucketLayer},
   pointer::{IntoUnsafePtr, UnsafePtr},
-  pool::BufferPool,
+  pool::VectorPool,
   task::{Task, TaskId, TaskRef, VoidCallback},
   timer::{SystemTimer, Timer},
 };
@@ -21,7 +21,7 @@ pub struct TimingWheel {
   timer: Box<dyn Timer>,
   ref_count: usize,
   last_id: TaskId,
-  pool: BufferPool,
+  pool: VectorPool,
 }
 
 #[napi]
@@ -38,7 +38,7 @@ impl TimingWheel {
 
   #[inline]
   fn with_timer(timer: impl Timer + 'static) -> Self {
-    let mut pool = BufferPool::new(
+    let mut pool = VectorPool::new(
       env::var("TW_BUFFER_POOL_SIZE")
         .unwrap_or("1024".to_string())
         .parse()

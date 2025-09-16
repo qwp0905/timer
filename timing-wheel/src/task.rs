@@ -2,7 +2,7 @@ use std::ptr::NonNull;
 
 use napi::{Env, Result, bindgen_prelude::FunctionRef};
 
-use crate::{clock::ClockHands, pool::Buffer};
+use crate::{clock::ClockHands, pool::ClockVector};
 
 #[napi]
 pub type VoidCallback = FunctionRef<(), ()>;
@@ -26,7 +26,7 @@ impl Task {
     delay: usize,
     callback: VoidCallback,
     is_interval: bool,
-    hands: Buffer,
+    hands: ClockVector,
   ) -> Self {
     Self {
       id,
