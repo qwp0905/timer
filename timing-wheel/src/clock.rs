@@ -1,34 +1,43 @@
 use std::ops::Index;
 
-use crate::constant::{LAYER_PER_BUCKET_BIT, LAYER_PER_BUCKET_MASK, MAX_LAYER_PER_BUCKET};
+use crate::{
+  constant::{LAYER_PER_BUCKET_BIT, LAYER_PER_BUCKET_MASK, MAX_LAYER_PER_BUCKET},
+  pool::Buffer,
+};
+
+#[inline]
+fn init_hands(hands: &mut Buffer, timestamp: usize) -> usize {
+  let mut current = timestamp;
+  for len in 0..MAX_LAYER_PER_BUCKET {
+    if current == 0 {
+      return len;
+    }
+    hands[len] = current & LAYER_PER_BUCKET_MASK;
+    current >>= LAYER_PER_BUCKET_BIT;
+  }
+  MAX_LAYER_PER_BUCKET
+}
 
 pub struct ClockHands {
-  hands: [usize; MAX_LAYER_PER_BUCKET],
+  hands: Buffer,
   len: usize,
   timestamp: usize,
 }
 impl ClockHands {
   #[inline]
-  pub fn new(timestamp: usize) -> Self {
-    let mut current = timestamp;
-    let mut hands = [0; MAX_LAYER_PER_BUCKET];
-    for len in 0..MAX_LAYER_PER_BUCKET {
-      if current == 0 {
-        return Self {
-          hands,
-          len,
-          timestamp,
-        };
-      }
-      hands[len] = current & LAYER_PER_BUCKET_MASK;
-      current >>= LAYER_PER_BUCKET_BIT;
-    }
-
+  pub fn new(timestamp: usize, mut hands: Buffer) -> Self {
+    let len = init_hands(&mut hands, timestamp);
     Self {
       hands,
-      len: MAX_LAYER_PER_BUCKET,
+      len,
       timestamp,
     }
+  }
+
+  #[inline]
+  pub fn set_timestamp(&mut self, timestamp: usize) {
+    self.timestamp = timestamp;
+    self.len = init_hands(&mut self.hands, timestamp);
   }
 
   #[inline]
@@ -39,7 +48,7 @@ impl ClockHands {
   #[inline]
   pub fn reset(&mut self) {
     self.len = 0;
-    self.hands = [0; MAX_LAYER_PER_BUCKET];
+    self.hands.iter_mut().for_each(|i| *i = 0);
     self.timestamp = 0;
   }
 

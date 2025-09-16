@@ -2,7 +2,7 @@ use std::ptr::NonNull;
 
 use napi::{Env, Result, bindgen_prelude::FunctionRef};
 
-use crate::clock::ClockHands;
+use crate::{clock::ClockHands, pool::Buffer};
 
 #[napi]
 pub type VoidCallback = FunctionRef<(), ()>;
@@ -26,11 +26,12 @@ impl Task {
     delay: usize,
     callback: VoidCallback,
     is_interval: bool,
+    hands: Buffer,
   ) -> Self {
     Self {
       id,
       delay,
-      clock_hands: ClockHands::new(scheduled_at + delay),
+      clock_hands: ClockHands::new(scheduled_at + delay, hands),
       callback,
       is_interval,
       refed: true,
@@ -69,7 +70,7 @@ impl Task {
 
   #[inline]
   pub fn set_scheduled_at(&mut self, scheduled_at: usize) {
-    self.clock_hands = ClockHands::new(scheduled_at + self.delay);
+    self.clock_hands.set_timestamp(scheduled_at + self.delay);
   }
 
   #[inline]

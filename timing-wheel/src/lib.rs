@@ -7,6 +7,7 @@ mod clock;
 mod constant;
 mod layer;
 mod pointer;
+mod pool;
 mod task;
 mod test;
 mod timer;
