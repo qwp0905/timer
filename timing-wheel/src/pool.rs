@@ -1,4 +1,5 @@
 use std::{
+  mem::ManuallyDrop,
   ops::{Index, IndexMut},
   ptr::NonNull,
   slice::IterMut,
@@ -10,13 +11,16 @@ use crate::{
 };
 
 pub struct ClockVector {
-  data: [usize; MAX_LAYER_PER_BUCKET],
+  data: ManuallyDrop<[usize; MAX_LAYER_PER_BUCKET]>,
   store: NonNull<VectorStore>,
 }
 impl ClockVector {
   #[inline]
   fn with(store: NonNull<VectorStore>, data: [usize; MAX_LAYER_PER_BUCKET]) -> Self {
-    Self { data, store }
+    Self {
+      data: ManuallyDrop::new(data),
+      store,
+    }
   }
 
   #[inline]
@@ -33,10 +37,13 @@ impl Drop for ClockVector {
   #[inline]
   fn drop(&mut self) {
     let buf = self.store.borrow_mut();
-    if buf.is_full() {
-      return;
+    unsafe {
+      if buf.is_full() {
+        ManuallyDrop::drop(&mut self.data);
+        return;
+      }
+      buf.data.push(ManuallyDrop::take(&mut self.data));
     }
-    buf.data.push(self.data);
   }
 }
 impl Index<usize> for ClockVector {

@@ -48,7 +48,6 @@ impl ClockHands {
   #[inline]
   pub fn reset(&mut self) {
     self.len = 0;
-    self.hands.iter_mut().for_each(|i| *i = 0);
     self.timestamp = 0;
   }
 
