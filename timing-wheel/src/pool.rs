@@ -10,13 +10,15 @@ use crate::{
   pointer::{IntoUnsafePtr, UnsafePtr},
 };
 
+type VectorData = [usize; MAX_LAYER_PER_BUCKET];
+
 pub struct ClockVector {
-  data: ManuallyDrop<[usize; MAX_LAYER_PER_BUCKET]>,
+  data: ManuallyDrop<VectorData>,
   store: NonNull<VectorStore>,
 }
 impl ClockVector {
   #[inline]
-  fn with(store: NonNull<VectorStore>, data: [usize; MAX_LAYER_PER_BUCKET]) -> Self {
+  fn with(store: NonNull<VectorStore>, data: VectorData) -> Self {
     Self {
       data: ManuallyDrop::new(data),
       store,
@@ -88,7 +90,7 @@ impl Drop for VectorPool {
 }
 
 struct VectorStore {
-  data: Vec<[usize; MAX_LAYER_PER_BUCKET]>,
+  data: Vec<VectorData>,
   cap: usize,
 }
 impl VectorStore {
