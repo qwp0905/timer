@@ -1,4 +1,4 @@
-use std::{collections::HashMap, env};
+use std::collections::HashMap;
 
 use napi::{JsNumber, bindgen_prelude::*};
 
@@ -8,7 +8,6 @@ use crate::{
   constant::{MAX_DELAY, MAX_LAYER_PER_BUCKET, MIN_DELAY},
   layer::{Bucket, BucketLayer},
   pointer::{IntoUnsafePtr, UnsafePtr},
-  pool::VectorPool,
   task::{Task, TaskId, TaskRef, VoidCallback},
   timer::{SystemTimer, Timer},
 };
@@ -21,7 +20,6 @@ pub struct TimingWheel {
   timer: Box<dyn Timer>,
   ref_count: usize,
   last_id: TaskId,
-  pool: VectorPool,
 }
 
 #[napi]
@@ -38,20 +36,13 @@ impl TimingWheel {
 
   #[inline]
   fn with_timer(timer: impl Timer + 'static) -> Self {
-    let mut pool = VectorPool::new(
-      env::var("TW_BUFFER_POOL_SIZE")
-        .unwrap_or("1024".to_string())
-        .parse()
-        .unwrap_or(1024),
-    );
     Self {
       tasks: Default::default(),
       layers: Vec::with_capacity(MAX_LAYER_PER_BUCKET),
       timer: Box::new(timer),
-      clock_hands: ClockHands::new(0, pool.acquire()),
+      clock_hands: ClockHands::new(0),
       ref_count: 0,
       last_id: 0,
-      pool,
     }
   }
 
@@ -149,14 +140,7 @@ impl TimingWheel {
     }
 
     let id = self.new_id();
-    let task = Task::new(
-      id,
-      self.timer.now(),
-      delay,
-      callback,
-      is_interval,
-      self.pool.acquire(),
-    );
+    let task = Task::new(id, self.timer.now(), delay, callback, is_interval);
     self.register_task_ref(task.create_ptr());
     Ok(id)
   }

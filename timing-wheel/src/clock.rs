@@ -1,12 +1,9 @@
 use std::ops::Index;
 
-use crate::{
-  constant::{LAYER_PER_BUCKET_BIT, LAYER_PER_BUCKET_MASK, MAX_LAYER_PER_BUCKET},
-  pool::ClockVector,
-};
+use crate::constant::{LAYER_PER_BUCKET_BIT, LAYER_PER_BUCKET_MASK, MAX_LAYER_PER_BUCKET};
 
 #[inline]
-fn init_hands(hands: &mut ClockVector, timestamp: usize) -> usize {
+fn init_hands(hands: &mut [usize; MAX_LAYER_PER_BUCKET], timestamp: usize) -> usize {
   let mut current = timestamp;
   for len in 0..MAX_LAYER_PER_BUCKET {
     if current == 0 {
@@ -19,13 +16,14 @@ fn init_hands(hands: &mut ClockVector, timestamp: usize) -> usize {
 }
 
 pub struct ClockHands {
-  hands: ClockVector,
+  hands: [usize; MAX_LAYER_PER_BUCKET],
   len: usize,
   timestamp: usize,
 }
 impl ClockHands {
   #[inline]
-  pub fn new(timestamp: usize, mut hands: ClockVector) -> Self {
+  pub fn new(timestamp: usize) -> Self {
+    let mut hands = [0; MAX_LAYER_PER_BUCKET];
     let len = init_hands(&mut hands, timestamp);
     Self {
       hands,
