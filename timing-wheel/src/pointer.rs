@@ -3,7 +3,7 @@ use std::ptr::NonNull;
 pub trait UnsafePtr<T> {
   fn borrow(&self) -> &T;
   fn borrow_mut(&mut self) -> &mut T;
-  fn deref(self) -> T;
+  fn drop(self);
 }
 impl<T> UnsafePtr<T> for NonNull<T> {
   #[inline]
@@ -17,8 +17,8 @@ impl<T> UnsafePtr<T> for NonNull<T> {
   }
 
   #[inline]
-  fn deref(self) -> T {
-    *unsafe { Box::from_raw(self.as_ptr()) }
+  fn drop(self) {
+    unsafe { self.drop_in_place() };
   }
 }
 

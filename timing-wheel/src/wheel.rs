@@ -209,12 +209,13 @@ impl TimingWheel {
       }
 
       if !self.unregister_task(task_ref.get_id()) {
-        let _ = task.deref();
+        task.drop();
         continue;
       }
 
       if !task_ref.is_interval() {
-        task.deref().execute(env)?;
+        task_ref.execute(env)?;
+        task.drop();
         continue;
       }
 

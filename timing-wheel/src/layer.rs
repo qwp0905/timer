@@ -44,7 +44,7 @@ impl Drop for BucketLayer {
     }
 
     for task in self.buckets.iter_mut().flat_map(|b| b.take()).flatten() {
-      let _ = task.deref();
+      task.drop();
     }
   }
 }
