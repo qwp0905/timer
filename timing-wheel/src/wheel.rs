@@ -134,7 +134,9 @@ impl TimingWheel {
     callback: VoidCallback,
     is_interval: bool,
   ) -> Result<TaskId> {
-    let delay = convert_delay(delay)?;
+    let delay = delay
+      .get_int64()
+      .map(|n| n.max(MIN_DELAY).min(MAX_DELAY) as usize)?;
     if self.tasks.is_empty() {
       self.reset();
     }
@@ -239,11 +241,4 @@ impl TimingWheel {
       self.layers.push(BucketLayer::new(len));
     }
   }
-}
-
-#[inline]
-fn convert_delay(delay: JsNumber) -> Result<usize> {
-  delay
-    .get_int64()
-    .map(|n| n.max(MIN_DELAY).min(MAX_DELAY) as usize)
 }
