@@ -105,7 +105,7 @@ impl TimingWheel {
 
   #[napi]
   pub fn refresh(&mut self, id: TaskId) {
-    let mut task = match self.tasks.get_mut(&id) {
+    let mut task = match self.tasks.get(&id) {
       Some(task) => *task,
       None => return,
     };
