@@ -117,7 +117,7 @@ impl TimingWheel {
   #[inline]
   pub fn new_id(&mut self) -> TaskId {
     let id = self.last_id;
-    self.last_id = self.last_id.checked_add(1).unwrap_or(0);
+    self.last_id = self.last_id.wrapping_add(1);
     id
   }
 
