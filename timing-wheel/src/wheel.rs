@@ -234,10 +234,10 @@ impl TimingWheel {
   }
 
   #[inline]
-  fn expand_layers(&mut self, layer_size: usize) {
-    for len in self.layers.len()..layer_size {
-      self.layers.push(BucketLayer::new(len));
-    }
+  fn expand_layers(&mut self, size: usize) {
+    self
+      .layers
+      .extend((self.layers.len()..size).map(BucketLayer::new));
   }
 }
 
