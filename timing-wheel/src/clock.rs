@@ -93,3 +93,10 @@ impl Index<usize> for ClockHands {
     &self.hands[index]
   }
 }
+
+impl Default for ClockHands {
+  #[inline]
+  fn default() -> Self {
+    Self::new(0)
+  }
+}

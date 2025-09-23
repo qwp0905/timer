@@ -40,7 +40,7 @@ impl TimingWheel {
       tasks: Default::default(),
       layers: Vec::with_capacity(MAX_LAYER_PER_BUCKET),
       timer: Box::new(timer),
-      clock_hands: ClockHands::new(0),
+      clock_hands: Default::default(),
       ref_count: 0,
       last_id: 0,
     }
