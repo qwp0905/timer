@@ -115,13 +115,6 @@ impl TimingWheel {
   }
 
   #[inline]
-  pub fn new_id(&mut self) -> TaskId {
-    let id = self.last_id;
-    self.last_id = self.last_id.wrapping_add(1);
-    id
-  }
-
-  #[inline]
   fn reset(&mut self) {
     self.timer.reset();
     self.clock_hands.reset();
@@ -141,7 +134,9 @@ impl TimingWheel {
       self.reset();
     }
 
-    let id = self.new_id();
+    let id = self.last_id;
+    self.last_id = self.last_id.wrapping_add(1);
+
     let task = Task::new(id, self.timer.now(), delay, callback, is_interval);
     self.register_task_ref(task.create_ptr());
     Ok(id)
